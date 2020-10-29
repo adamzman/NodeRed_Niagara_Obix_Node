@@ -36,4 +36,4 @@ Each instance of the Obix Connector can have its data inserted dynamically. Each
 
 ##  **- Histories**
 ###  Reading
-Using a GET request, can pass parameters in the request itself or in the body. The same values above will override any default values (Just remove the msg part). **But instead of passing 'historyQuery', pass 'start', 'end', and 'limit' individually.**
+Using a GET request, can pass parameters in the request itself. The same values above will override any default values (Just remove the msg part). **But instead of passing 'historyQuery', pass 'start', 'end', and 'limit' individually.**

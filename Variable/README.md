@@ -41,6 +41,6 @@ Each instance of the Obix Connector can have its data inserted dynamically. Each
 
 ##  **- Variables/Points**
 ###  Reading
-Using a GET request, can pass parameters in the request itself or in the body. The same values above will override any default values (Just remove the msg part).
+Using a GET request, can pass parameters in the request itself. The same values above will override any default values (Just remove the msg part).
 ###  Writing
-Using a POST request, can pass parameters in the request itself or in the body. The same values above will override any default values (Just remove the msg part).
+Using a POST request, can pass parameters in the body. The same values above will override any default values (Just remove the msg part).
