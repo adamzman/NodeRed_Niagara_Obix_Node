@@ -207,7 +207,7 @@ module.exports = function(RED) {
                 }
             }
             else{
-                throwError(node, msg, "No Config Node Set (If Passing in config variables from msg, Configure a blank config node)", "red", "dot", "No Config Set");
+                throwError(node, msg, "No Config Node Set (If Passing in config variables from msg, Configure a blank config node)", "red", "ring", "No Config Set");
                 return;
             }
 
