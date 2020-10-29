@@ -132,9 +132,14 @@ module.exports = function(RED) {
 
                 // After the Request is made, and the JSON data is returned...
                 try{     
+                    if(data.enum){ value = data.enum._attributes.val; }
+                    else if(data.bool){ value = data.bool._attributes.val; }
+                    else if(data.str){ value = data.str._attributes.val; }
+                    else if(data.real){ value = data.real._attributes.val; }
+                    else{ throwError(node, msg, "Error with Variable Parsing, Can't Find Data Type", "red", "dot", "Error with Variable Parsing"); return; }
                     msg.payload = {
                         "Variable": path,
-                        "Value": data.real._attributes.val,
+                        "Value": value,
                     };
                 }catch(error){
                     throwError(node, msg, "Error with Variable Parsing: " + error, "red", "dot", "Error with Variable Parsing");
