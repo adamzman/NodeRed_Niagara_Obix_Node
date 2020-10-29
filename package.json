@@ -4,7 +4,9 @@
     "description": "Connector from Niagara to Node-Red using Obix",
     "author": "Adam Zimmerman",
     "keywords": [
-        "node-red"
+        "node-red",
+        "Tridium Niagara",
+        "Obix"
     ],
     "node-red": {
         "nodes": {
