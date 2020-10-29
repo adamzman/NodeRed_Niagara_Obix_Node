@@ -1,0 +1,38 @@
+<script type="text/javascript">
+    RED.nodes.registerType('Niagara Obix Connector',{
+        category: 'config',
+        defaults: {
+            displayName: {value: ""},
+            username: {value: ""},
+            password: {value: ""},
+            host: {value: ""},
+            port: {value: ""},
+        },
+        label: function() {
+            return this.displayName ? this.displayName : ((this.host || this.port) ? this.host+":"+this.port : this.username) || "Undefined";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="Niagara Obix Connector">
+    <div class="form-row">
+        <label for="node-config-input-displayName" style="width: 100%"><i class="fa fa-tag"></i> Connection Display Name:</label><br/>
+        <input type="text" id="node-config-input-displayName" placeholder="ex. Oversite">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-username" style="width: 100%"><i class="fa fa-user"></i> Obix Username:</label><br/>
+        <input type="text" id="node-config-input-username" placeholder="ex. obix">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-password" style="width: 100%"><i class="fa fa-lock"></i> Obix Password:</label><br/>
+        <input type="password" id="node-config-input-password">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-host" style="width: 100%"><i class="fa fa-globe"></i> Niagara IP Address:</label><br/>
+        <input type="text" id="node-config-input-host" placeholder="ex. 192.168.10.250">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-port" style="width: 100%"><i class="fa fa-shield"></i> Niagara HTTP Port:</label><br/>
+        <input type="number" id="node-config-input-port" placeholder="ex. 8080">
+    </div>
+</script>

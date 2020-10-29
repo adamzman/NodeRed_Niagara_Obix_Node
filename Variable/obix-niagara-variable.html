@@ -1,0 +1,67 @@
+<!-- How the node actually looks -->
+<script type="text/javascript">
+    RED.nodes.registerType('Niagara Obix Variable', {
+        category: 'Niagara Obix Nodes',
+        color: '#0088CE',
+        defaults: {
+            name: {value: ""},
+            serverConfig: {value: "", type: "Niagara Obix Connector"},
+            path: {value: ""},
+            action: {value: "GET"},
+            value: {
+                value: true,
+                validate: RED.validators.typedInput('valueType')
+            },
+            valueType: {
+                value: 'bool'
+            },
+        },
+        inputs:1,
+        outputs:1,
+        icon: "font-awesome/fa-bullseye",
+        label: function() {
+            return this.name || "Niagara Obix Variable";
+        },
+        // Used for the input type selector
+        oneditprepare: function() {
+            $('#node-input-value').typedInput({
+                default: 'bool',
+                typeField: $("#node-input-valueType"),
+                types: ['bool','str','num']
+            });
+        }
+    });
+</script>
+
+<!-- Input to configure -->
+<script type="text/html" data-template-name="Niagara Obix Variable">
+    <div class="form-row">
+        <label for="node-input-name" style="width: 100%"><i class="fa fa-tag"></i> Name:</label><br/>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-serverConfig" style="width: 100%"><i class="fa fa-globe"></i> Niagara Connector:</label><br/>
+        <input type="text" id="node-input-serverConfig">
+    </div><hr/>
+    <div class="form-row">
+        <label for="node-input-path" style="width: 100%"><i class="fa fa-road"></i> Variable Path (Default):</label><br/>
+        <input type="text" id="node-input-path" placeholder="PointFolder/PointName">
+    </div>
+    <div class="form-row">
+        <label for="node-input-action" style="width: 100%"><i class="fa fa-exchange"></i> Action (Default):</label><br/>
+        <select type="text" id="node-input-action">
+            <option value="GET">Read</option>
+            <option value="POST">Write</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-value" style="width: 100%"><i class="fa fa-tags"></i> Value (Default - Only Used if Action is Write):</label><br/>
+        <input type="text" id="node-input-value">
+        <input type="hidden" id="node-input-valueType">
+    </div>
+</script>
+
+<!-- Help -->
+<script type="text/html" data-help-name="Niagara Obix Variable">
+    <p>A simple node that converts the message payloads into all lower-case characters</p>
+</script>

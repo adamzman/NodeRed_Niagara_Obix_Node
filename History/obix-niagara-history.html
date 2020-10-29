@@ -1,0 +1,55 @@
+<!-- How the node actually looks -->
+<script type="text/javascript">
+    RED.nodes.registerType('Niagara Obix History', {
+        category: 'Niagara Obix Nodes',
+        color: '#0088CE',
+        defaults: {
+            name: {value: ""},
+            serverConfig: {value: "", type: "Niagara Obix Connector"},
+            path: {value: ""},
+            presetQuery: {value: "yesterday"}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "font-awesome/fa-line-chart",
+        label: function() {
+            return this.name || "Niagara Obix History";
+        }
+    });
+</script>
+
+<!-- Input to configure -->
+<script type="text/html" data-template-name="Niagara Obix History">
+    <div class="form-row">
+        <label for="node-input-name" style="width: 100%"><i class="fa fa-tag"></i> Name:</label><br/>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-serverConfig" style="width: 100%"><i class="fa fa-globe"></i> Connector:</label><br/>
+        <input type="text" id="node-input-serverConfig">
+    </div><hr/>
+    <div class="form-row">
+        <label for="node-input-path" style="width: 100%"><i class="fa fa-road"></i> History Path  (Default):</label><br/>
+        <input type="text" id="node-input-path" placeholder="HistoryFolder/HistoryName">
+    </div>
+    <div class="form-row">
+        <label for="node-input-presetQuery" style="width: 100%"><i class="fa fa-exchange"></i> Preset Query (Default):</label><br/>
+        <select type="text" id="node-input-presetQuery">
+            <option value="yesterday">Yesterday</option>
+            <option value="last24Hours">Last 24 Hours</option>
+            <option value="weekToDate">Week to Date</option>
+            <option value="lastWeek">Last Week</option>
+            <option value="last7Days">Last 7 Days</option>
+            <option value="monthToDate">Month to Date</option>
+            <option value="lastMonth">Last Month</option>
+            <option value="yearToDate (limit=1000)">Year to Date (Only First 1000 Records)</option>
+            <option value="lastYear (limit=1000)">Last Year (Only First 1000 Records)</option>
+            <option value="unboundedQuery">Unbounded Query (Only First 1000 Records)</option>
+        </select>
+    </div>
+</script>
+
+<!-- Help -->
+<script type="text/html" data-help-name="Niagara Obix History">
+    <p>A simple node that converts the message payloads into all lower-case characters</p>
+</script>
