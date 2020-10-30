@@ -21,6 +21,8 @@ module.exports = function(RED) {
                 var apiHttpPort = null;
                 var apiPath = null;
                 var apiHistoryQuery;
+                var apiPresetQuery;
+                var presetOptions = ["yesterday", "last24Hours", "weekToDate", "lastWeek", "last7Days", "monthToDate", "lastMonth", "yearToDate (limit=1000)", "lastYear (limit=1000)", "unboundedQuery"];
                 
                 // If msg was sent through API Request
                 try{
@@ -32,6 +34,7 @@ module.exports = function(RED) {
                             apiIpAddress = msg.payload.ipAddress || null;
                             apiHttpPort = msg.payload.httpPort || null;
                             apiPath = msg.payload.path || null;
+                            apiPresetQuery = msg.payload.presetQuery || null;
     
                             // History Query Parameters
                             if(msg.payload.start || msg.payload.end || msg.payload.limit){
@@ -54,7 +57,8 @@ module.exports = function(RED) {
                 httpPort = apiHttpPort || msg.httpPort || node.serverConfig.port;
                 path = apiPath || msg.path || config.path;
                 historyQuery = apiHistoryQuery || msg.historyQuery || null;
-                presetQuery = "";
+                presetQuery = apiPresetQuery || config.presetQuery;
+                const presetCheck = (val) => val === presetQuery;
                 
                 // If missing a configuration variable, return error
                 if(!username){ throwError(node, msg, "Invalid Parameters : Missing Obix Username", "red", "ring", "Missing Username"); return; }
@@ -62,6 +66,7 @@ module.exports = function(RED) {
                 if(!ipAddress){ throwError(node, msg, "Invalid Parameters : Missing Niagara IP Address", "red", "ring", "Missing IP Address"); return; }
                 if(!httpPort){ throwError(node, msg, "Invalid Parameters : Missing Niagara HTTP Port", "red", "ring", "Missing HTTP Port"); return; }
                 if(!path){ throwError(node, msg, "Invalid Parameters : Missing History Path", "red", "ring", "Missing History Path"); return; }
+                if(!presetOptions.some(presetCheck)){ throwError(node, msg, "Invalid Parameters : PresetQuery Value Invalid", "red", "ring", "PresetQuery Value Invalid"); return; }
                 
                 // Slice '/' from the path if it exists
                 path.charAt(path.length - 1) == '/' ? path = path.slice(0, -1) : null;
@@ -135,7 +140,6 @@ module.exports = function(RED) {
                 }else{
                     historyQuery = "";
                     presetQueryParameter = "";
-                    presetQuery = config.presetQuery;
                     url = "http://" + ipAddress + ":" + httpPort + "/obix/histories/" + path + "/";
 
                     // Fetch for Preset Query

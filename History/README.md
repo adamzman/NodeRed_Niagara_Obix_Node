@@ -2,10 +2,6 @@
 **Links to a Niagara Station through the Obix Protocol... The Output of the Obix Node will be a JSON Object of a history with the queried records**
 
 ---
-# Setup: 
-To set up Obix in Niagara, drag in the Obix Network (from the palette) into the drivers folder. Then drag in the HTTP BasicScheme from the baja palette (baja -> AuthenticationSchemes -> WebServicesSchemes -> HTTPBasic) into the Authentication Service in the Services folder (Services -> AuthenticationService -> Authentication Schemes). Next, create a new user with an admin role and select the HTTPBasicScheme for the Authentication Scheme Name. OBIX uses HTTP only, so HTTP must be enabled and opened in the firewall.
-
----
 # Fields:
  - **Username** - Set to the Obix User that has been set up in Niagara using the HTTPBasic Authentication Schema... Obix User must also be set to admin role.
  - **Password** - Password for the Obix User.
@@ -15,14 +11,14 @@ To set up Obix in Niagara, drag in the Obix Network (from the palette) into the 
  - **HistoryQuery** - Used to specify what time period and how many records you want to read from a history... Basic Query format `{"start": "2020-10-11T12:40:05-04:00", "end": "2020-10-14T12:40:05-04:00", "limit": "2"}` where start and end are the periods of reading data, and the limit is the number of records returned. If there are more records than the limit allows, then it returns the number of records starting from the start time.
 
 ---
-# Pre-Set Instances
+# Default Values
 
 ##  **- Histories**
 ###  Reading
 Set the Username, Password, IP Address, and HTTP Port for your station. Then set `Path` to the path of the history you want to read, and `HistoryQuery` to the parameters you want (example of a query in the Fields Documentation above). All other fields can be ignored.
 
 ---
-# Dynamic Instances
+# Dynamic Values
 Each instance of the Obix Connector can have its data inserted dynamically. Each dynamic value has the same functionality as the Fields Documentation above states. Passing the following values will override the default values you may pre-configured. 
  - `msg.username` -> Username (String)
  - `msg.password` -> Password (String)
