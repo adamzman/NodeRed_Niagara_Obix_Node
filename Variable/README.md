@@ -29,5 +29,5 @@ Each instance of the Niagara Obix Node can have its values inserted dynamically.
 
 ### API Calls
 **You will get a Socket Hang Up or ECONNRESET error if the parameters that are passed in are wrong**
-To Read: Using a GET request, can pass parameters that will override any default values (Same values above, just remove the msg. part).
-To Write: Using a POST request, can pass values in the body that will override any default values (Same values above, just remove the msg. part).
+- To Read: Using a GET request, can pass parameters that will override any default values (Same values above, just remove the msg. part).
+- To Write: Using a POST request, can pass values in the body that will override any default values (Same values above, just remove the msg. part).

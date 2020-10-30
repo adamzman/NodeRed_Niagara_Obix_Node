@@ -34,7 +34,7 @@ Each instance of the Niagara Obix Node can have its values inserted dynamically.
      - "unboundedQuery"
 
   - **HistoryQuery** - Used to specify what time period and how many records you want to read from a history... 
-    Basic Query format `{"start": "2020-10-11T12:40:05-04:00", "end": "2020-10-14T12:40:05-04:00", "limit": "2"}`
+    Basic Query format `{"start": "2020-10-11T12:40:05-04:00", "end": "2020-10-14T12:40:05-04:00", "limit": "2"}`.
     Start and end are the periods of reading data, and the limit is the number of records returned. 
     If there are more records than the limit allows, then it returns the number of records starting from the start time.
 ---
