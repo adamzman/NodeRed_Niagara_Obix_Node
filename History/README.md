@@ -1,35 +1,45 @@
-# Function: 
-**Links to a Niagara Station through the Obix Protocol... The Output of the Obix Node will be a JSON Object of a history with the queried records**
+# Niagara Obix History Node
+Gets History Records from Niagara using the obix protocol
 
----
-# Fields:
+### Config Node:
  - **Username** - Set to the Obix User that has been set up in Niagara using the HTTPBasic Authentication Schema... Obix User must also be set to admin role.
  - **Password** - Password for the Obix User.
  - **IP Address** - IP Address of the Niagara Station.
- - **HTTP Port** - HTTP Port for the Niagara Station... HTTP must be enabled and HTTPS Only must be disabled in the Web Services, and the Port must be exposed on the Niagara Machine.
- - **Path** - Used to indicate which variable/point you want to interact with... Path starts after config... ex. config/TestFolder/Point, only take "TestFolder/Point".
- - **HistoryQuery** - Used to specify what time period and how many records you want to read from a history... Basic Query format `{"start": "2020-10-11T12:40:05-04:00", "end": "2020-10-14T12:40:05-04:00", "limit": "2"}` where start and end are the periods of reading data, and the limit is the number of records returned. If there are more records than the limit allows, then it returns the number of records starting from the start time.
-
+ - **HTTP Port** - HTTP Port for the Niagara Station... HTTP must be enabled and HTTPS Only must be disabled in the Web Services, and the Port must be exposed on the Niagara Machine (Unless accessing from localhost only).
+ 
+### Additional Fields:
+ - **Path** - Used to indicate which history you want to interact with... Path starts after histories... ex. histories/TestHistories/History, only take "TestHistories/History".
+ - **Preset Query** - Preset history queries. Can be overridden with a custom query by passing in msg.historyQuery (More details below).
 ---
-# Default Values
 
-##  **- Histories**
-###  Reading
-Set the Username, Password, IP Address, and HTTP Port for your station. Then set `Path` to the path of the history you want to read, and `HistoryQuery` to the parameters you want (example of a query in the Fields Documentation above). All other fields can be ignored.
+### Dynamic Values
+Each instance of the Niagara Obix Node can have its values inserted dynamically. Each dynamic value has the same functionality as the values above. Passing the following values will **override** the default values you may pre-configured. 
 
----
-# Dynamic Values
-Each instance of the Obix Connector can have its data inserted dynamically. Each dynamic value has the same functionality as the Fields Documentation above states. Passing the following values will override the default values you may pre-configured. 
  - `msg.username` -> Username (String)
  - `msg.password` -> Password (String)
  - `msg.ipAddress` -> IP Address (String)
  - `msg.httpPort` -> HTTP Port (Number)
- - `msg.historyQuery` -> History Query (Overrides the PresetQuery Selection) (JSON Object)
+ - `msg.historyQuery` -> History Query (Overrides the PresetQuery Selection) (JSON Object : See formatting options below)
+ - `msg.presetQuery` -> Use a Preset History Query (Overrides the PresetQuery Selection) (String : Values must be one of the following)
 
+     - "yesterday"
+     - "last24Hours"
+     - "weekToDate"
+     - "lastWeek"
+     - "last7Days"
+     - "monthToDate"
+     - "lastMonth"
+     - "yearToDate (limit=1000)"
+     - "lastYear (limit=1000)"
+     - "unboundedQuery"
+
+  - **HistoryQuery** - Used to specify what time period and how many records you want to read from a history... 
+    Basic Query format `{"start": "2020-10-11T12:40:05-04:00", "end": "2020-10-14T12:40:05-04:00", "limit": "2"}`
+    Start and end are the periods of reading data, and the limit is the number of records returned. 
+    If there are more records than the limit allows, then it returns the number of records starting from the start time.
 ---
-# API Calls
-**You will get a Socket Hang Up or ECONNRESET error if the parameters that are passed in are wrong**
 
-##  **- Histories**
-###  Reading
-Using a GET request, can pass parameters in the request itself. The same values above will override any default values (Just remove the msg part). **But instead of passing 'historyQuery', pass 'start', 'end', and 'limit' individually.**
+### API Calls
+**You will get a Socket Hang Up or ECONNRESET error if the parameters that are passed in are wrong**
+Using a GET request, can pass parameters that will override any default values (Same values above, just remove the msg. part). 
+But instead of passing 'historyQuery', pass 'start', 'end', and 'limit' individually.
