@@ -20,5 +20,10 @@
         "moment-timezone": "^0.5.31",
         "tcpie": "latest",
         "xml-js": "^1.6.11"
+    },
+    "homepage": "https://github.com/adamz0210/NodeRed_Niagara_Obix_Node",
+    "license": "ISC",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
     }
 }
