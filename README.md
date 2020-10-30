@@ -10,6 +10,7 @@ To set up Obix in Niagara...
 5. Create a new user with an admin role, and select the HTTPBasicScheme for the Authentication Scheme Name. 
 **OBIX uses HTTP only, so HTTP must be enabled and opened in the firewall.**
 <!-- Add Pictures -->
+<!-- Add Examples -->
 ---
 ---
 # Niagara Obix History Node
