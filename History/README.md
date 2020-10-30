@@ -1,6 +1,4 @@
 # Niagara Obix History Node
-Gets History Records from Niagara using the obix protocol
-
 ### Config Node:
  - **Username** - Set to the Obix User that has been set up in Niagara using the HTTPBasic Authentication Schema... Obix User must also be set to admin role.
  - **Password** - Password for the Obix User.
@@ -19,6 +17,7 @@ Each instance of the Niagara Obix Node can have its values inserted dynamically.
  - `msg.password` -> Password (String)
  - `msg.ipAddress` -> IP Address (String)
  - `msg.httpPort` -> HTTP Port (Number)
+ - `msg.path` -> Path (String)
  - `msg.historyQuery` -> History Query (Overrides the PresetQuery Selection) (JSON Object : See formatting options below)
  - `msg.presetQuery` -> Use a Preset History Query (Overrides the PresetQuery Selection) (String : Values must be one of the following)
 
@@ -34,12 +33,12 @@ Each instance of the Niagara Obix Node can have its values inserted dynamically.
      - "unboundedQuery"
 
   - **HistoryQuery** - Used to specify what time period and how many records you want to read from a history... 
-    Basic Query format `{"start": "2020-10-11T12:40:05-04:00", "end": "2020-10-14T12:40:05-04:00", "limit": "2"}`.
-    Start and end are the periods of reading data, and the limit is the number of records returned. 
-    If there are more records than the limit allows, then it returns the number of records starting from the start time.
+    - Basic Query format `{"start": "2020-10-11T12:40:05-04:00", "end": "2020-10-14T12:40:05-04:00", "limit": "2"}`.
+    - Start and end are the periods of reading data, and the limit is the number of records returned. 
+    - If there are more records than the limit allows, then it returns the number of records starting from the start time.
 ---
 
 ### API Calls
 **You will get a Socket Hang Up or ECONNRESET error if the parameters that are passed in are wrong**
-Using a GET request, can pass parameters that will override any default values (Same values above, just remove the msg. part). 
+- Using a GET request, can pass parameters that will override any default values (Same values above, just remove the msg. part). 
 But instead of passing 'historyQuery', pass 'start', 'end', and 'limit' individually.

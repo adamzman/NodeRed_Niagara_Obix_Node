@@ -51,5 +51,32 @@
 
 <!-- Help -->
 <script type="text/html" data-help-name="Niagara Obix History">
-    <p>A simple node that converts the message payloads into all lower-case characters</p>
+    <p>A node that connects Node Red to Niagara through Obix Protocol. Returns an Array of History Records from a Niagara History.</p>
+    
+    <h3>Details</h3>
+        <div>More Details about the input values can be found <a href="https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/tree/master/History">here</a></div>
+    
+    <h3>Inputs</h3>
+        <dl class="message-properties">
+            <dt class="optional">username <span class="property-type">string</span></dt>
+            <dd> the Niagara Obix Username. </dd>
+            <dt class="optional">password <span class="property-type">string</span></dt>
+            <dd> the Niagara Obix Password. </dd>
+            <dt class="optional">ipAddress <span class="property-type">string</span></dt>
+            <dd> the IP Address of the Niagara Station. </dd>
+            <dt class="optional">httpPort <span class="property-type">number</span></dt>
+            <dd> the HTTP Port for the Niagara Station. </dd>
+            <dt class="optional">path <span class="property-type">string</span></dt>
+            <dd> a Path to the history in the Niagara Station. </dd>
+            <dt class="optional">historyQuery <span class="property-type">object</span></dt>
+            <dd> a History Query (Overrides the PresetQuery Selection) </dd>
+            <dt class="optional">presetQuery <span class="property-type">string</span></dt>
+            <dd> a Preset History Query (Overrides the PresetQuery Selection) </dd>
+        </dl>
+
+    <h3>Outputs</h3>
+        <dl class="message-properties">
+            <dt>payload <span class="property-type">object</span></dt>
+            <dd>an Object Containing Information about the Query, and an Array of the Records returned.</dd>
+        </dl>
 </script>

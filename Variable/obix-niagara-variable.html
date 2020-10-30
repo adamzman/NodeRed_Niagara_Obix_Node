@@ -63,5 +63,32 @@
 
 <!-- Help -->
 <script type="text/html" data-help-name="Niagara Obix Variable">
-    <p>A simple node that converts the message payloads into all lower-case characters</p>
+    <p>A node that connects Node Red to Niagara through Obix Protocol. Returns an Object with the Variable/Point Name and the Value return from NIagara.</p>
+    
+    <h3>Details</h3>
+        <div>More Details about the input values can be found <a href="https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/tree/master/Variable">here</a></div>
+    
+    <h3>Inputs</h3>
+        <dl class="message-properties">
+            <dt class="optional">username <span class="property-type">string</span></dt>
+            <dd> the Niagara Obix Username. </dd>
+            <dt class="optional">password <span class="property-type">string</span></dt>
+            <dd> the Niagara Obix Password. </dd>
+            <dt class="optional">ipAddress <span class="property-type">string</span></dt>
+            <dd> the IP Address of the Niagara Station. </dd>
+            <dt class="optional">httpPort <span class="property-type">number</span></dt>
+            <dd> the HTTP Port for the Niagara Station. </dd>
+            <dt class="optional">path <span class="property-type">string</span></dt>
+            <dd> a Path to the Variable/Point in the Niagara Station. </dd>
+            <dt class="optional">method <span class="property-type">string</span></dt>
+            <dd> provides the action (must be either 'GET' (for Reading) or 'POST' (for Writing)) </dd>
+            <dt class="optional">value <span class="property-type">string | boolean | number</span></dt>
+            <dd> a value that overrides the default value from the node. </dd>
+        </dl>
+
+    <h3>Outputs</h3>
+        <dl class="message-properties">
+            <dt>payload <span class="property-type">object</span></dt>
+            <dd>an Object Containing Information about the Variable returned from Niagara.</dd>
+        </dl>
 </script>
