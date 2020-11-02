@@ -19,7 +19,8 @@
         "axios": "^0.21.0",
         "moment-timezone": "^0.5.31",
         "tcpie": "latest",
-        "xml-js": "^1.6.11"
+        "xml-js": "^1.6.11",
+        "node-red-contrib-simple-message-queue": "latest"
     },
     "homepage": "https://github.com/adamz0210/NodeRed_Niagara_Obix_Node",
     "license": "ISC",
