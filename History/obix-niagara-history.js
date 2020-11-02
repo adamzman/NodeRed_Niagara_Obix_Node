@@ -11,7 +11,7 @@ module.exports = function(RED) {
         // Connecting Configuration Node
         node.serverConfig = RED.nodes.getNode(config.serverConfig);
 
-        node.on('input', async function(msg) {
+        node.on('input', async function(msg, send, done) {
 
             if(node.serverConfig){
 
@@ -217,9 +217,11 @@ module.exports = function(RED) {
 
             node.status({fill:"green",shape:"dot",text:"Success"});
             node.send(msg);
-        });
 
-        node.status({fill: "blue", shape: "dot", text: "ready"});
+            if (done) {
+                done();
+            }
+        });
     }
 
     function tcpPing(node, msg, ping, userConfig){
