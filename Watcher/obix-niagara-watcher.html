@@ -1,0 +1,134 @@
+<!-- How the node actually looks -->
+<script type="text/javascript">
+    RED.nodes.registerType('Niagara Obix Watcher', {
+        category: 'Niagara Obix',
+        color: '#0088CE',
+        defaults: {
+            name: {value: ""},
+            serverConfig: {value: "", type: "Niagara Obix Connector"},
+            pollRate: {value: 10, required: true, validate: function(v) {
+                return v <= 30 && v > 0;
+            }},
+            search: {value: ""},
+            rules: {value:[], validate: function(v) {
+                return v.includes("") ? false : true;
+            }},
+        },
+        inputs:0,
+        outputs:1,
+        icon: "font-awesome/fa-search",
+        label: function() {
+            return this.name || "Niagara Obix Watcher";
+        },
+        oneditprepare: function() {
+            const node = this;
+
+            // Setting Up Path List
+            $('#node-input-rule-container').editableList({
+                addButton: "Add New Path",
+                height: 400,
+                scrollOnAdd: true,
+                sortable: true,
+                removable: true,
+                addItem: function(container, index, data) {
+                    // Check for Empty Data
+                    JSON.stringify(data) === JSON.stringify({}) ? data = "" : null;
+
+                    const row = $('<div/>').appendTo(container);
+                    $('<input/>', {
+                        class: 'node-input-rule-path-value',
+                        type: 'text',
+                        style: 'margin-left: 5px;',
+                        value: data,
+                        placeholder: "Insert Niagara Path"
+                    }).appendTo(row);
+                    node.rules.includes(data) ? null : node.rules.push(data);
+                }
+            });
+            
+            // Setting Up Search Bar
+            $('#node-input-search').searchBox({
+                change: function() {
+                    $("#node-input-rule-container").editableList('filter', function(rowData) {
+                        // Check for Empty Data
+                        if(JSON.stringify(rowData) === JSON.stringify({})){
+                            rowData = "";
+                        }
+                        return rowData.toLowerCase().includes($("#node-input-search").searchBox('value').toLowerCase());
+                    });
+                }
+            });
+
+            // Handle Sort Button
+            $("#sortButton").on("click", function() {
+                $('#node-input-rule-container').trigger('custom');
+            });
+
+            // Re-Renders Path Container when sort button is clicked
+            $("#node-input-rule-container").on( "custom", function() {
+                var sortedRules = node.rules;
+                sortedRules.sort();
+
+                $("#node-input-rule-container").html("");
+                node.rules = [];
+
+                sortedRules.forEach(function(index) {
+                    $("#node-input-rule-container").editableList('addItem', index);
+                });
+            });
+
+            // Adds Path Values to the rules list
+            var rules = node.rules;
+            node.rules = [];
+            rules.forEach((rule) => $("#node-input-rule-container").editableList('addItem', rule));
+        },
+        oneditsave: function() {
+            const listItems = $("#node-input-rule-container").editableList('items');
+            const node = this;
+            node.rules = [];
+
+            listItems.each(function(index) {                
+                $("#node-input-rule-container").editableList('addItem', $(this).find('.node-input-rule-path-value')[0].value);
+            });
+        },
+    });
+</script>
+
+<!-- Input to configure -->
+<script type="text/html" data-template-name="Niagara Obix Watcher">
+    <div class="form-row">
+        <label for="node-input-name" style="width: 100%"><i class="fa fa-tag"></i> Name:</label><br/>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-serverConfig" style="width: 100%"><i class="fa fa-globe"></i> Connector:</label><br/>
+        <input type="text" id="node-input-serverConfig">
+    </div><hr/>
+    <div class="form-row">
+        <label for="node-input-pollRate" style="width: 100%"><i class="fa fa-refresh"></i> Poll Rate (seconds):</label><br/>
+        <input type="number" id="node-input-pollRate">
+    </div>
+    <div class="form-row">
+        <label for="node-input-search" style="width: 100%"><i class="fa fa-search"></i> Search Paths:</label><br/>
+        <input type="text" id="node-input-search" style="border: 1px solid #ccc; border-radius: 4px">
+    </div>
+    <div class="form-row node-input-rule-container-row">
+        <label for="node-input-rule-container"><i class="fa fa-tasks"></i> Paths:</span></label>
+        <button type="button" class="red-ui-button red-ui-button-small" id="sortButton" style="float: right"><i class="fa fa-sort-alpha-asc"></i> Sort</button>
+        <ol id="node-input-rule-container"></ol>
+    </div>
+</script>
+
+<!-- Help -->
+<script type="text/html" data-help-name="Niagara Obix Watcher">
+    <p>A node that connects Node Red to Niagara through Obix Protocol. Returns an Array of History Records from a Niagara History.</p>
+    
+    <h3>Details</h3>
+        <div>More Details about the input values can be found <a href="https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/tree/master/Watcher">here</a></div>
+
+    <h3>Outputs</h3>
+        <dl class="message-properties">
+            <dt>payload <span class="property-type">object</span></dt>
+            <dd>an Object Containing Information about the Query, and an Array of the Records returned.</dd>
+        </dl>
+</script>

@@ -12,15 +12,15 @@
         "nodes": {
             "Niagara Obix Connector": "Connector/obix-niagara-connector.js",
             "Niagara Obix History": "History/obix-niagara-history.js",
-            "Niagara Obix Variable": "Variable/obix-niagara-variable.js"
+            "Niagara Obix Variable": "Variable/obix-niagara-variable.js",
+            "Niagara Obix Watcher": "Watcher/obix-niagara-watcher.js"
         }
     },
     "dependencies": {
         "axios": "^0.21.0",
         "moment-timezone": "^0.5.31",
         "tcpie": "latest",
-        "xml-js": "^1.6.11",
-        "node-red-contrib-simple-message-queue": "latest"
+        "xml-js": "^1.6.11"
     },
     "homepage": "https://github.com/adamz0210/NodeRed_Niagara_Obix_Node",
     "license": "ISC",
