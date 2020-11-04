@@ -6,7 +6,6 @@ module.exports = function(RED) {
         const tcpie = require('tcpie');
         const axios = require("axios");
         const convert = require('xml-js');
-        const moment = require('moment-timezone');
 
         // Connecting Configuration Node
         node.serverConfig = RED.nodes.getNode(config.serverConfig);
