@@ -3,6 +3,7 @@ module.exports = function(RED) {
     function WatcherNode(config) {
         RED.nodes.createNode(this,config);
         const node = this;
+        var context = this.context();
         const axios = require("axios");
         const convert = require('xml-js');
         const https = require('https');
@@ -11,35 +12,35 @@ module.exports = function(RED) {
         node.serverConfig = RED.nodes.getNode(config.serverConfig);
 
         // Setting all variables if passed in, if not, we will use the preset values
-        username = node.serverConfig.username;
-        password = node.serverConfig.password;
-        ipAddress = node.serverConfig.host;
-        httpsPort =  node.serverConfig.port;
-        pollRate = config.pollRate;
-        paths = config.rules;
+        context.set('username', node.serverConfig.username);
+        context.set('password', node.serverConfig.password);
+        context.set('ipAddress', node.serverConfig.host);
+        context.set('httpsPort', node.serverConfig.port);
+        context.set('pollRate', config.pollRate);
+        context.set('paths', config.rules);
 
         // If missing a configuration variable, return error
-        if(!username){ throwError("red", "ring", "Missing Username"); return; }
-        if(!password){ throwError("red", "ring", "Missing Password"); return; }
-        if(!ipAddress){ throwError("red", "ring", "Missing IP Address"); return; }
-        if(!httpsPort){ throwError("red", "ring", "Missing HTTPS Port"); return; }
-        if(!pollRate || !(pollRate <= 30 && pollRate >= 1)){ throwError("red", "ring", "PollRate Invalid"); return; }
-        if(!paths){ throwError("red", "ring", "Missing a Path"); return; }
+        if(!context.get('username')){ throwError("red", "ring", "Missing Username"); return; }
+        if(!context.get('password')){ throwError("red", "ring", "Missing Password"); return; }
+        if(!context.get('ipAddress')){ throwError("red", "ring", "Missing IP Address"); return; }
+        if(!context.get('httpsPort')){ throwError("red", "ring", "Missing HTTPS Port"); return; }
+        if(!context.get('pollRate') || !(context.get('pollRate') <= 30 && context.get('pollRate') >= 1)){ throwError("red", "ring", "PollRate Invalid"); return; }
+        if(!context.get('paths')){ throwError("red", "ring", "Missing a Path"); return; }
         
         // Slice '/' from the path if it exists
-        for(i = 0; i < paths.length; i++){
-            path = paths[i];
+        for(i = 0; i < context.get('paths').length; i++){
+            path = context.get('paths')[i];
             path.charAt(path.length - 1) == '/' ? path = path.slice(0, -1) : null;
             path.charAt(0) == '/' ? path = path.slice(1) : null;
-            paths[i] = path;
+            context.get('paths')[i] = path;
         }
 
         var apiCallConfig = {
             method: 'post',
-            url: 'https://' + ipAddress + ':' + httpsPort + '/obix/watchService/make',
+            url: 'https://' + context.get('ipAddress') + ':' + context.get('httpsPort') + '/obix/watchService/make',
             auth: {
-                username: username, 
-                password: password
+                username: context.get('username'), 
+                password: context.get('password')
             },
             httpsAgent: new https.Agent({ rejectUnauthorized: false })
         };
@@ -58,13 +59,13 @@ module.exports = function(RED) {
 
             // Prepare Paths for ADD POST Request
             var apiPathsAdd = [];
-            paths.forEach((path) => apiPathsAdd.push('<uri val="/obix/config/' + path + '/"/>'));
+            context.get('paths').forEach((path) => apiPathsAdd.push('<uri val="/obix/config/' + path + '/"/>'));
             var apiAddConfig = {
                 method: 'post',
                 url: data.obj.op[0]._attributes.href,
                 auth: {
-                    username: username, 
-                    password: password
+                    username: context.get('username'), 
+                    password: context.get('password')
                 },
                 httpsAgent: new https.Agent({ rejectUnauthorized: false }),
                 data : `<obj
@@ -87,7 +88,6 @@ module.exports = function(RED) {
 
                 // Checking for Errors after Add was Successful
                 if(addData.obj.list.err){
-                    // console.log("test")
                     var x = 0;
                     for(i = 0; i < addData.obj.list.err.length; i++){
                         x = 1;
@@ -101,8 +101,8 @@ module.exports = function(RED) {
                     method: 'post',
                     url: data.obj.op[3]._attributes.href,
                     auth: {
-                        username: username,
-                        password: password
+                        username: context.get('username'),
+                        password: context.get('password')
                     },
                     httpsAgent: new https.Agent({ rejectUnauthorized: false })
                 };
@@ -148,7 +148,6 @@ module.exports = function(RED) {
                         // pollRefreshData: pollRefreshData,
                         payload: values
                     }
-                    // console.log(values)
                     node.send(msg)
 
                     // After Watch has been created and established
@@ -158,8 +157,8 @@ module.exports = function(RED) {
                             method: 'post',
                             url: data.obj.op[2]._attributes.href,
                             auth: {
-                                username: username,
-                                password: password
+                                username: context.get('username'),
+                                password: context.get('password')
                             },
                             httpsAgent: new https.Agent({ rejectUnauthorized: false })
                         };
@@ -203,25 +202,24 @@ module.exports = function(RED) {
                                 // pollChangesData: pollChangesData,
                                 payload: values
                             }
-                            // console.log(values)
                             node.send(msg)
 
                         }).catch(function (error) {
                             clearInterval(pollChanges);
-                            throwError("red", "dot", "Error");
+                            throwError("red", "dot", "Error in PollChange");
                             node.send({"error": error});
                             return;
                         })
-                    }, pollRate * 1000);
+                    }, context.get('pollRate') * 1000);
 
                 }).catch(function (error) {
-                    throwError("red", "dot", "Error");
+                    throwError("red", "dot", "Error in PollRefresh");
                     node.send({"error": error});
                     return;
                 })
 
             }).catch(function (error) {
-                throwError("red", "dot", "Error");
+                throwError("red", "dot", "Error in Add");
                 node.send({"error": error});
                 return;
             })
@@ -229,10 +227,7 @@ module.exports = function(RED) {
         })
         .catch(function (error) {
             // handle error
-            if(JSON.stringify(error).includes("401")){throwError("red", "ring", "Login Failed")}
-            else if(JSON.stringify(error).includes("ENOTFOUND")){throwError("red", "ring", "Invalid Host IP")}
-            else if(JSON.stringify(error).includes("ECONNREFUSED")){throwError("red", "ring", "Invalid Host Port")}
-            else{throwError("red", "dot", "Unknown Error"); node.send({"error": error});}
+            throwError("red", "dot", "Error in Connector");
             return;
         })
 

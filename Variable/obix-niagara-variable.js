@@ -2,7 +2,7 @@ module.exports = function(RED) {
     function VariableNode(config) {
         RED.nodes.createNode(this,config);
         const node = this;
-        
+        var context = this.context();
         const axios = require("axios");
         const convert = require('xml-js');
         const https = require('https');
@@ -15,45 +15,45 @@ module.exports = function(RED) {
             if(node.serverConfig){
 
                 // Setting all variables if passed in, if not, we will use the preset values
-                username = msg.username || node.serverConfig.username;
-                password = msg.password || node.serverConfig.password;
-                ipAddress = msg.ipAddress || node.serverConfig.host;
-                httpsPort = msg.httpsPort || node.serverConfig.port;
-                path = msg.path || config.path;
-                action = msg.method || config.action;
-                value = msg.value || config.value;
+                context.set('username', msg.username || node.serverConfig.username);
+                context.set('password', msg.password || node.serverConfig.password);
+                context.set('ipAddress', msg.ipAddress || node.serverConfig.host);
+                context.set('httpsPort', msg.httpsPort || node.serverConfig.port);
+                context.set('path', msg.path || config.path);
+                context.set('action', msg.method || config.action);
+                context.set('value', msg.value || config.value);
 
                 // If missing a configuration variable, return error
-                if(!username){ throwError(msg, "Invalid Parameters : Missing Obix Username", "red", "ring", "Missing Username"); return; }
-                if(!password){ throwError(msg, "Invalid Parameters : Missing Obix Password", "red", "ring", "Missing Password"); return; }
-                if(!ipAddress){ throwError(msg, "Invalid Parameters : Missing Niagara IP Address", "red", "ring", "Missing IP Address"); return; }
-                if(!httpsPort){ throwError(msg, "Invalid Parameters : Missing Niagara HTTPS Port", "red", "ring", "Missing HTTPS Port"); return; }
-                if(!path){ throwError(msg, "Invalid Parameters : Missing Variable Path", "red", "ring", "Missing Variable Path"); return; }
-                if((!value) && (action == "POST")){ throwError(msg, "Invalid Parameters : Missing Write Value", "red", "ring", "Missing Write Value"); return; }
+                if(!context.get('username')){ throwError(msg, "Invalid Parameters : Missing Obix Username", "red", "ring", "Missing Username"); return; }
+                if(!context.get('password')){ throwError(msg, "Invalid Parameters : Missing Obix Password", "red", "ring", "Missing Password"); return; }
+                if(!context.get('ipAddress')){ throwError(msg, "Invalid Parameters : Missing Niagara IP Address", "red", "ring", "Missing IP Address"); return; }
+                if(!context.get('httpsPort')){ throwError(msg, "Invalid Parameters : Missing Niagara HTTPS Port", "red", "ring", "Missing HTTPS Port"); return; }
+                if(!context.get('path')){ throwError(msg, "Invalid Parameters : Missing Variable Path", "red", "ring", "Missing Variable Path"); return; }
+                if((!context.get('value')) && (context.get('action') == "POST")){ throwError(msg, "Invalid Parameters : Missing Write Value", "red", "ring", "Missing Write Value"); return; }
                 
                 // Slice '/' from the path if it exists
-                path.charAt(path.length - 1) == '/' ? path = path.slice(0, -1) : null;
-                path.charAt(0) == '/' ? path = path.slice(1) : null;
+                context.get('path').charAt(context.get('path').length - 1) == '/' ? context.get('path') = context.get('path').slice(0, -1) : null;
+                context.get('path').charAt(0) == '/' ? context.get('path') = context.get('path').slice(1) : null;
 
                 // Set Fetch parameters
-                if(action == "POST"){
+                if(context.get('action') == "POST"){
                     var apiCallConfig = {
                         method: 'post',
-                        url: "https://" + ipAddress + ":" + httpsPort + "/obix/config/" + path + "/set/",
+                        url: "https://" + context.get('ipAddress') + ":" + context.get('httpsPort') + "/obix/config/" + context.get('path') + "/set/",
                         auth: {
-                            username: username, 
-                            password: password
+                            username: context.get('username'), 
+                            password: context.get('password')
                         },
                         httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                        data : '<real val="' + value + '"/>'
+                        data : '<real val="' + context.get('value') + '"/>'
                     };
                 }else{
                     var apiCallConfig = {
                         method: 'get',
-                        url: "https://" + ipAddress + ":" + httpsPort + "/obix/config/" + path + "/out/",
+                        url: "https://" + context.get('ipAddress') + ":" + context.get('httpsPort') + "/obix/config/" + context.get('path') + "/out/",
                         auth: {
-                            username: username, 
-                            password: password
+                            username: context.get('username'), 
+                            password: context.get('password')
                         },
                         httpsAgent: new https.Agent({ rejectUnauthorized: false }),
                     };
@@ -73,14 +73,14 @@ module.exports = function(RED) {
 
                     // After the Request is made, and the JSON data is returned...
                     try{     
-                        if(data.enum){ value = data.enum._attributes.val; }
-                        else if(data.bool){ value = data.bool._attributes.val; }
-                        else if(data.str){ value = data.str._attributes.val; }
-                        else if(data.real){ value = data.real._attributes.val; }
+                        if(data.enum){ context.set('value', data.enum._attributes.val) }
+                        else if(data.bool){ context.set('value', data.bool._attributes.val) }
+                        else if(data.str){ context.set('value', data.str._attributes.val) }
+                        else if(data.real){ context.set('value', data.real._attributes.val) }
                         else{ throwError(msg, "Error with Variable Parsing, Can't Find Data Type", "red", "dot", "Error with Variable Parsing"); return; }
                         msg.payload = {
-                            "Variable": path,
-                            "Value": value,
+                            "Variable": context.get('path'),
+                            "Value": context.get('value'),
                         };
                     }catch(error){
                         throwError(msg, "Error with Variable Parsing: " + error, "red", "dot", "Error with Variable Parsing");
