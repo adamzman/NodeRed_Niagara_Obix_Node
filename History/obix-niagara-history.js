@@ -154,8 +154,6 @@ module.exports = function(RED) {
         function throwError(msg, err, color, shape, status){
             node.error(err, msg);
             node.status({fill: color, shape: shape, text: status});
-            msg.payload = err;
-            node.send(msg);
         }
 
         function parseData(msg, data) {
