@@ -37,8 +37,8 @@ module.exports = function(RED) {
                 if(!presetOptions.some(presetCheck)){ throwError(msg, "Invalid Parameters : PresetQuery Value Invalid", "red", "ring", "PresetQuery Value Invalid"); return; }
                 
                 // Slice '/' from the path if it exists
-                context.get('path').charAt(context.get('path').length - 1) == '/' ? context.get('path') = context.get('path').slice(0, -1) : null;
-                context.get('path').charAt(0) == '/' ? context.get('path') = context.get('path').slice(1) : null;
+                context.get('path').charAt(context.get('path').length - 1) == '/' ? context.set('path', context.get('path').slice(0, -1)) : null;
+                context.get('path').charAt(0) == '/' ? context.set('path', context.get('path').slice(1)) : null;
 
                 // Check if passed in custom history query, if not, we will use the preset that is selected
                 if(context.get('historyQuery')){

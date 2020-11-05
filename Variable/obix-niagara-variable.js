@@ -32,8 +32,8 @@ module.exports = function(RED) {
                 if((!context.get('value')) && (context.get('action') == "POST")){ throwError(msg, "Invalid Parameters : Missing Write Value", "red", "ring", "Missing Write Value"); return; }
                 
                 // Slice '/' from the path if it exists
-                context.get('path').charAt(context.get('path').length - 1) == '/' ? context.get('path') = context.get('path').slice(0, -1) : null;
-                context.get('path').charAt(0) == '/' ? context.get('path') = context.get('path').slice(1) : null;
+                context.get('path').charAt(context.get('path').length - 1) == '/' ? context.set('path', context.get('path').slice(0, -1)) : null;
+                context.get('path').charAt(0) == '/' ? context.set('path', context.get('path').slice(1)) : null;
 
                 // Set Fetch parameters
                 if(context.get('action') == "POST"){
