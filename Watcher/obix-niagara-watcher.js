@@ -5,6 +5,7 @@ module.exports = function(RED) {
         const node = this;
         const axios = require("axios");
         const convert = require('xml-js');
+        const https = require('https');
         var pollChanges;
         // Connecting Configuration Node
         node.serverConfig = RED.nodes.getNode(config.serverConfig);
@@ -13,7 +14,7 @@ module.exports = function(RED) {
         username = node.serverConfig.username;
         password = node.serverConfig.password;
         ipAddress = node.serverConfig.host;
-        httpPort =  node.serverConfig.port;
+        httpsPort =  node.serverConfig.port;
         pollRate = config.pollRate;
         paths = config.rules;
 
@@ -21,7 +22,7 @@ module.exports = function(RED) {
         if(!username){ throwError("red", "ring", "Missing Username"); return; }
         if(!password){ throwError("red", "ring", "Missing Password"); return; }
         if(!ipAddress){ throwError("red", "ring", "Missing IP Address"); return; }
-        if(!httpPort){ throwError("red", "ring", "Missing HTTP Port"); return; }
+        if(!httpsPort){ throwError("red", "ring", "Missing HTTPS Port"); return; }
         if(!pollRate || !(pollRate <= 30 && pollRate >= 1)){ throwError("red", "ring", "PollRate Invalid"); return; }
         if(!paths){ throwError("red", "ring", "Missing a Path"); return; }
         
@@ -35,11 +36,12 @@ module.exports = function(RED) {
 
         var apiCallConfig = {
             method: 'post',
-            url: 'http://' + ipAddress + ':' + httpPort + '/obix/watchService/make',
+            url: 'https://' + ipAddress + ':' + httpsPort + '/obix/watchService/make',
             auth: {
                 username: username, 
                 password: password
             },
+            httpsAgent: new https.Agent({ rejectUnauthorized: false })
         };
         node.status({fill: "blue", shape: "dot", text: "Creating Watch"});
 
@@ -64,6 +66,7 @@ module.exports = function(RED) {
                     username: username, 
                     password: password
                 },
+                httpsAgent: new https.Agent({ rejectUnauthorized: false }),
                 data : `<obj
                             is="obix:WatchIn"
                             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -101,6 +104,7 @@ module.exports = function(RED) {
                         username: username,
                         password: password
                     },
+                    httpsAgent: new https.Agent({ rejectUnauthorized: false })
                 };
 
                 // Make PollRefresh POST Request
@@ -157,6 +161,7 @@ module.exports = function(RED) {
                                 username: username,
                                 password: password
                             },
+                            httpsAgent: new https.Agent({ rejectUnauthorized: false })
                         };
 
                         axios(apiPollChangesConfig)

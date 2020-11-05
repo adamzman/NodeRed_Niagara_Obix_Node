@@ -15,56 +15,23 @@ module.exports = function(RED) {
 
             if(node.serverConfig){
 
-                var apiUsername = null;
-                var apiPassword = null;
-                var apiIpAddress = null;
-                var apiHttpPort = null;
-                var apiPath = null;
-                var apiHistoryQuery;
-                var apiPresetQuery;
                 var presetOptions = ["yesterday", "last24Hours", "weekToDate", "lastWeek", "last7Days", "monthToDate", "lastMonth", "yearToDate (limit=1000)", "lastYear (limit=1000)", "unboundedQuery"];
                 
-                // If msg was sent through API Request
-                try{
-                    if(msg.req){
-                        // If API is sent with query parameters
-                        if(JSON.stringify(msg.payload) !== '{}'){
-                            apiUsername = msg.payload.username || null;
-                            apiPassword = msg.payload.password || null;
-                            apiIpAddress = msg.payload.ipAddress || null;
-                            apiHttpPort = msg.payload.httpPort || null;
-                            apiPath = msg.payload.path || null;
-                            apiPresetQuery = msg.payload.presetQuery || null;
-    
-                            // History Query Parameters
-                            if(msg.payload.start || msg.payload.end || msg.payload.limit){
-                                apiHistoryQuery = {};
-                                msg.payload.start ? apiHistoryQuery.start = msg.payload.start : null;
-                                msg.payload.end ? apiHistoryQuery.end = msg.payload.end : null;
-                                msg.payload.limit ? apiHistoryQuery.limit = msg.payload.limit : null;
-                            }
-                        }
-                    }
-                }catch(error){
-                    throwError(node, msg, "Error with API Call: " + error, "red", "dot", "Error with API Call");
-                    return;
-                }
-
                 // Setting all variables if passed in, if not, we will use the preset values
-                username = apiUsername || msg.username || node.serverConfig.username;
-                password = apiPassword || msg.password || node.serverConfig.password;
-                ipAddress = apiIpAddress || msg.ipAddress || node.serverConfig.host;
-                httpPort = apiHttpPort || msg.httpPort || node.serverConfig.port;
-                path = apiPath || msg.path || config.path;
-                historyQuery = apiHistoryQuery || msg.historyQuery || null;
-                presetQuery = apiPresetQuery || config.presetQuery;
+                username = msg.username || node.serverConfig.username;
+                password = msg.password || node.serverConfig.password;
+                ipAddress = msg.ipAddress || node.serverConfig.host;
+                httpsPort = msg.httpsPort || node.serverConfig.port;
+                path = msg.path || config.path;
+                historyQuery = msg.historyQuery || null;
+                presetQuery = msg.presetQuery || config.presetQuery;
                 const presetCheck = (val) => val === presetQuery;
                 
                 // If missing a configuration variable, return error
                 if(!username){ throwError(node, msg, "Invalid Parameters : Missing Obix Username", "red", "ring", "Missing Username"); return; }
                 if(!password){ throwError(node, msg, "Invalid Parameters : Missing Obix Password", "red", "ring", "Missing Password"); return; }
                 if(!ipAddress){ throwError(node, msg, "Invalid Parameters : Missing Niagara IP Address", "red", "ring", "Missing IP Address"); return; }
-                if(!httpPort){ throwError(node, msg, "Invalid Parameters : Missing Niagara HTTP Port", "red", "ring", "Missing HTTP Port"); return; }
+                if(!httpsPort){ throwError(node, msg, "Invalid Parameters : Missing Niagara HTTPS Port", "red", "ring", "Missing HTTPS Port"); return; }
                 if(!path){ throwError(node, msg, "Invalid Parameters : Missing History Path", "red", "ring", "Missing History Path"); return; }
                 if(!presetOptions.some(presetCheck)){ throwError(node, msg, "Invalid Parameters : PresetQuery Value Invalid", "red", "ring", "PresetQuery Value Invalid"); return; }
                 
@@ -77,13 +44,13 @@ module.exports = function(RED) {
                     "username": username,
                     "password": password,
                     "ipAddress": ipAddress,
-                    "httpPort": httpPort,
+                    "httpsPort": httpsPort,
                     "path": path,
                 };
 
                 // Pinging to ensure Connection Exists
                 try {
-                    const ping = tcpie(ipAddress, Number(httpPort), {count: 1, interval: 1, timeout: 500})
+                    const ping = tcpie(ipAddress, Number(httpsPort), {count: 1, interval: 1, timeout: 500})
                     pingStatus = await tcpPing(node, msg, ping, userConfig);
                     if(!pingStatus) return;
                 } catch(error) {
@@ -120,7 +87,7 @@ module.exports = function(RED) {
 
                     // Fetch for Custom Query
                     try{
-                        url = "http://" + ipAddress + ":" + httpPort + "/obix/histories/" + path + "/~historyQuery/";
+                        url = "https://" + ipAddress + ":" + httpsPort + "/obix/histories/" + path + "/~historyQuery/";
                         const response = await axios.get(url, { params: historyQuery, auth: {username: username, password: password} });
                         var data = convert.xml2js(response.data, {compact: true, spaces: 4});
 
@@ -140,7 +107,7 @@ module.exports = function(RED) {
                 }else{
                     historyQuery = "";
                     presetQueryParameter = "";
-                    url = "http://" + ipAddress + ":" + httpPort + "/obix/histories/" + path + "/";
+                    url = "https://" + ipAddress + ":" + httpsPort + "/obix/histories/" + path + "/";
 
                     // Fetch for Preset Query
                     try{
@@ -230,7 +197,7 @@ module.exports = function(RED) {
                 pingResults = stats;
                 // If Ping Fails, throw error and exit
                 if(!(pingResults.success >= 1)){ 
-                    errorMsg = "Error: Host Unreachable - " + userConfig.ipAddress + ":" + userConfig.httpPort;
+                    errorMsg = "Error: Host Unreachable - " + userConfig.ipAddress + ":" + userConfig.httpsPort;
                     throwError(node, msg, errorMsg, "red", "ring", errorMsg); 
                     resolve(false);
                 }else{

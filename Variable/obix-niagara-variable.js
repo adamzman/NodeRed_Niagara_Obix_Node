@@ -14,50 +14,20 @@ module.exports = function(RED) {
 
             if(node.serverConfig){
 
-                // MAY HAVE TO USE THE OBIX WATCH FUNCTIONALITY IF MORE POINTS ARE NEEDED
-
-                var apiUsername = null;
-                var apiPassword = null;
-                var apiIpAddress = null;
-                var apiHttpPort = null;
-                var apiPath = null;
-                var apiAction = null;
-                var apiValue = null;
-                
-                // If msg was sent through API Request
-                try{
-                    if(msg.req){
-                        // If API is sent with query parameters
-                        if(JSON.stringify(msg.payload) !== '{}'){
-                            apiUsername = msg.payload.username || null;
-                            apiPassword = msg.payload.password || null;
-                            apiIpAddress = msg.payload.ipAddress || null;
-                            apiHttpPort = msg.payload.httpPort || null;
-                            apiPath = msg.payload.path || null;
-                            apiAction = msg.req.method || null;
-                            apiValue = msg.payload.value || null;
-                        }
-                    }
-
-                }catch(error){
-                    throwError(node, msg, "Error with API Call: " + error, "red", "dot", "Error with API Call");
-                    return;
-                }
-
                 // Setting all variables if passed in, if not, we will use the preset values
-                username = apiUsername || msg.username || node.serverConfig.username;
-                password = apiPassword || msg.password || node.serverConfig.password;
-                ipAddress = apiIpAddress || msg.ipAddress || node.serverConfig.host;
-                httpPort = apiHttpPort || msg.httpPort || node.serverConfig.port;
-                path = apiPath || msg.path || config.path;
-                action = apiAction || msg.method || config.action;
-                value = apiValue || msg.value || config.value;
+                username = msg.username || node.serverConfig.username;
+                password = msg.password || node.serverConfig.password;
+                ipAddress = msg.ipAddress || node.serverConfig.host;
+                httpsPort = msg.httpsPort || node.serverConfig.port;
+                path = msg.path || config.path;
+                action = msg.method || config.action;
+                value = msg.value || config.value;
 
                 // If missing a configuration variable, return error
                 if(!username){ throwError(node, msg, "Invalid Parameters : Missing Obix Username", "red", "ring", "Missing Username"); return; }
                 if(!password){ throwError(node, msg, "Invalid Parameters : Missing Obix Password", "red", "ring", "Missing Password"); return; }
                 if(!ipAddress){ throwError(node, msg, "Invalid Parameters : Missing Niagara IP Address", "red", "ring", "Missing IP Address"); return; }
-                if(!httpPort){ throwError(node, msg, "Invalid Parameters : Missing Niagara HTTP Port", "red", "ring", "Missing HTTP Port"); return; }
+                if(!httpsPort){ throwError(node, msg, "Invalid Parameters : Missing Niagara HTTPS Port", "red", "ring", "Missing HTTPS Port"); return; }
                 if(!path){ throwError(node, msg, "Invalid Parameters : Missing Variable Path", "red", "ring", "Missing Variable Path"); return; }
                 if((!value) && (action == "POST")){ throwError(node, msg, "Invalid Parameters : Missing Write Value", "red", "ring", "Missing Write Value"); return; }
                 
@@ -70,7 +40,7 @@ module.exports = function(RED) {
                     "username": username,
                     "password": password,
                     "ipAddress": ipAddress,
-                    "httpPort": httpPort,
+                    "httpsPort": httpsPort,
                     "path": path,
                     "action": action,
                     "value": value,
@@ -78,7 +48,7 @@ module.exports = function(RED) {
 
                 // Pinging to ensure Connection Exists
                 try {
-                    const ping = tcpie(ipAddress, Number(httpPort), {count: 1, interval: 1, timeout: 500})
+                    const ping = tcpie(ipAddress, Number(httpsPort), {count: 1, interval: 1, timeout: 500})
                     pingStatus = await tcpPing(node, msg, ping, userConfig);
                     if(!pingStatus) return;
                 } catch(error) {
@@ -92,7 +62,7 @@ module.exports = function(RED) {
                     if(action == "POST"){
                         var apiCallConfig = {
                             method: 'post',
-                            url: "http://" + ipAddress + ":" + httpPort + "/obix/config/" + path + "/set/",
+                            url: "https://" + ipAddress + ":" + httpsPort + "/obix/config/" + path + "/set/",
                             auth: {
                                 username: username, 
                                 password: password
@@ -102,7 +72,7 @@ module.exports = function(RED) {
                     }else{
                         var apiCallConfig = {
                             method: 'get',
-                            url: "http://" + ipAddress + ":" + httpPort + "/obix/config/" + path + "/out/",
+                            url: "https://" + ipAddress + ":" + httpsPort + "/obix/config/" + path + "/out/",
                             auth: {
                                 username: username, 
                                 password: password
@@ -166,7 +136,7 @@ module.exports = function(RED) {
                 pingResults = stats;
                 // If Ping Fails, throw error and exit
                 if(!(pingResults.success >= 1)){ 
-                    errorMsg = "Error: Host Unreachable - " + userConfig.ipAddress + ":" + userConfig.httpPort;
+                    errorMsg = "Error: Host Unreachable - " + userConfig.ipAddress + ":" + userConfig.httpsPort;
                     throwError(node, msg, errorMsg, "red", "ring", errorMsg); 
                     resolve(false);
                 }else{
