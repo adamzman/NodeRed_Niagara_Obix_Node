@@ -2,9 +2,9 @@ module.exports = function(RED) {
     function HistoryNode(config) {
         RED.nodes.createNode(this,config);
         const node = this;
-        // Library for TCP Ping, to verify if port is open before connecting
-        const tcpie = require('tcpie');
+        
         const axios = require("axios");
+        const https = require('https');
         const convert = require('xml-js');
         const moment = require('moment-timezone');
 
@@ -28,35 +28,16 @@ module.exports = function(RED) {
                 const presetCheck = (val) => val === presetQuery;
                 
                 // If missing a configuration variable, return error
-                if(!username){ throwError(node, msg, "Invalid Parameters : Missing Obix Username", "red", "ring", "Missing Username"); return; }
-                if(!password){ throwError(node, msg, "Invalid Parameters : Missing Obix Password", "red", "ring", "Missing Password"); return; }
-                if(!ipAddress){ throwError(node, msg, "Invalid Parameters : Missing Niagara IP Address", "red", "ring", "Missing IP Address"); return; }
-                if(!httpsPort){ throwError(node, msg, "Invalid Parameters : Missing Niagara HTTPS Port", "red", "ring", "Missing HTTPS Port"); return; }
-                if(!path){ throwError(node, msg, "Invalid Parameters : Missing History Path", "red", "ring", "Missing History Path"); return; }
-                if(!presetOptions.some(presetCheck)){ throwError(node, msg, "Invalid Parameters : PresetQuery Value Invalid", "red", "ring", "PresetQuery Value Invalid"); return; }
+                if(!username){ throwError(msg, "Invalid Parameters : Missing Obix Username", "red", "ring", "Missing Username"); return; }
+                if(!password){ throwError(msg, "Invalid Parameters : Missing Obix Password", "red", "ring", "Missing Password"); return; }
+                if(!ipAddress){ throwError(msg, "Invalid Parameters : Missing Niagara IP Address", "red", "ring", "Missing IP Address"); return; }
+                if(!httpsPort){ throwError(msg, "Invalid Parameters : Missing Niagara HTTPS Port", "red", "ring", "Missing HTTPS Port"); return; }
+                if(!path){ throwError(msg, "Invalid Parameters : Missing History Path", "red", "ring", "Missing History Path"); return; }
+                if(!presetOptions.some(presetCheck)){ throwError(msg, "Invalid Parameters : PresetQuery Value Invalid", "red", "ring", "PresetQuery Value Invalid"); return; }
                 
                 // Slice '/' from the path if it exists
                 path.charAt(path.length - 1) == '/' ? path = path.slice(0, -1) : null;
                 path.charAt(0) == '/' ? path = path.slice(1) : null;
-                
-                // Used to pass in config into functions easily
-                var userConfig = {
-                    "username": username,
-                    "password": password,
-                    "ipAddress": ipAddress,
-                    "httpsPort": httpsPort,
-                    "path": path,
-                };
-
-                // Pinging to ensure Connection Exists
-                try {
-                    const ping = tcpie(ipAddress, Number(httpsPort), {count: 1, interval: 1, timeout: 500})
-                    pingStatus = await tcpPing(node, msg, ping, userConfig);
-                    if(!pingStatus) return;
-                } catch(error) {
-                    throwError(node, msg, "Error with TCP Ping: " + error, "red", "dot", "Error with TCP Ping");
-                    return;
-                }
 
                 // Check if passed in custom history query, if not, we will use the preset that is selected
                 if(historyQuery){
@@ -69,7 +50,7 @@ module.exports = function(RED) {
                             // If valid, set to the proper format needed by the API
                             historyQuery.start = start.toISOString();
                         }else{
-                            throwError(node, msg, "HistoryQuery Start is an Invalid Timestamp", "red", "ring", "HistoryQuery Start is an Invalid Timestamp");
+                            throwError(msg, "HistoryQuery Start is an Invalid Timestamp", "red", "ring", "HistoryQuery Start is an Invalid Timestamp");
                             return;
                         }
                     }
@@ -80,7 +61,7 @@ module.exports = function(RED) {
                             // If valid, set to the proper format needed by the API
                             historyQuery.end = end.toISOString();
                         }else{
-                            throwError(node, msg, "HistoryQuery End is an Invalid Timestamp", "red", "ring", "HistoryQuery End is an Invalid Timestamp");
+                            throwError(msg, "HistoryQuery End is an Invalid Timestamp", "red", "ring", "HistoryQuery End is an Invalid Timestamp");
                             return;
                         }
                     }
@@ -88,19 +69,19 @@ module.exports = function(RED) {
                     // Fetch for Custom Query
                     try{
                         url = "https://" + ipAddress + ":" + httpsPort + "/obix/histories/" + path + "/~historyQuery/";
-                        const response = await axios.get(url, { params: historyQuery, auth: {username: username, password: password} });
+                        const response = await axios.get(url, { params: historyQuery, auth: {username: username, password: password}, httpsAgent: new https.Agent({ rejectUnauthorized: false }), });
                         var data = convert.xml2js(response.data, {compact: true, spaces: 4});
 
                         if(data.err){
                             data.err._attributes.is == "obix:BadUriErr" ? status = "Invalid History Path" : status = "Unknown Error";
-                            throwError(node, msg, "Error in Preset Query Search: " + status, "red", "dot", status);
+                            throwError(msg, "Error in Preset Query Search: " + status, "red", "dot", status);
                             return;
                         }
                     }catch(error){
-                        if(String(error).includes("404")){throwError(node, msg, "Error Invalid IP/Port: " + error, "red", "dot", "Invalid IP/Port"); return;}
-                        if(String(error).includes("401")){throwError(node, msg, "Error Invalid Credentials: " + error, "red", "dot", "Invalid Credentials"); return;}
+                        if(String(error).includes("404")){throwError(msg, "Error Invalid IP/Port: " + error, "red", "dot", "Invalid IP/Port"); return;}
+                        if(String(error).includes("401")){throwError(msg, "Error Invalid Credentials: " + error, "red", "dot", "Invalid Credentials"); return;}
 
-                        throwError(node, msg, "Error with Custom History Query Fetch: " + error, "red", "dot", "Error with Custom History Query Fetch");
+                        throwError(msg, "Error with Custom History Query Fetch: " + error, "red", "dot", "Error with Custom History Query Fetch");
                         return;
                     }
 
@@ -112,13 +93,13 @@ module.exports = function(RED) {
                     // Fetch for Preset Query
                     try{
                         // Make Fetch to get the preset query
-                        const response = await axios.get(url, { auth: {username: username, password: password} });
+                        const response = await axios.get(url, { auth: {username: username, password: password}, httpsAgent: new https.Agent({ rejectUnauthorized: false }), });
                         var data = convert.xml2js(response.data, {compact: true, spaces: 4});
 
                         // Check if Error Occurred
                         if(data.err){
                             data.err._attributes.is == "obix:BadUriErr" ? status = "Invalid History Path" : status = "Unknown Error";
-                            throwError(node, msg, "Error in Preset Query Search: " + status, "red", "dot", status);
+                            throwError(msg, "Error in Preset Query Search: " + status, "red", "dot", status);
                             return;
                         }else{
                             // If previous request was successful, then append the preset history query to the new request                            
@@ -128,7 +109,7 @@ module.exports = function(RED) {
                                     break;
                                 }
                                 if(i >= (data.obj.ref.length - 1)){
-                                    throwError(node, msg, "Error in Preset Query Search: Invalid History Path", "red", "dot", "Invalid History Path");
+                                    throwError(msg, "Error in Preset Query Search: Invalid History Path", "red", "dot", "Invalid History Path");
                                     return;
                                 }
                             }
@@ -136,14 +117,14 @@ module.exports = function(RED) {
                         }
 
                         // Fetch with preset query
-                        const response2 = await axios.get(url, { auth: {username: username, password: password} });
+                        const response2 = await axios.get(url, { auth: {username: username, password: password}, httpsAgent: new https.Agent({ rejectUnauthorized: false }), });
                         var data = convert.xml2js(response2.data, {compact: true, spaces: 4});
 
                     }catch(error){
-                        if(String(error).includes("404")){throwError(node, msg, "Error Invalid IP/Port: " + error, "red", "dot", "Invalid IP/Port"); return;}
-                        if(String(error).includes("401")){throwError(node, msg, "Error Invalid Credentials: " + error, "red", "dot", "Invalid Credentials"); return;}
+                        if(String(error).includes("404")){throwError(msg, "Error Invalid IP/Port: " + error, "red", "dot", "Invalid IP/Port"); return;}
+                        if(String(error).includes("401")){throwError(msg, "Error Invalid Credentials: " + error, "red", "dot", "Invalid Credentials"); return;}
 
-                        throwError(node, msg, "Error with Preset History Query Fetch: " + error, "red", "dot", "Error with Preset History Query Fetch");
+                        throwError(msg, "Error with Preset History Query Fetch: " + error, "red", "dot", "Error with Preset History Query Fetch");
                         return;
                     }
                 }
@@ -173,12 +154,12 @@ module.exports = function(RED) {
                         "Results": value,
                     };
                 }catch(error){
-                    throwError(node, msg, "Error with History Parsing: " + error, "red", "dot", "Error with History Parsing");
+                    throwError(msg, "Error with History Parsing: " + error, "red", "dot", "Error with History Parsing");
                     return;
                 }
             }
             else{
-                throwError(node, msg, "No Config Node Set (If Passing in config variables from msg, Configure a blank config node)", "red", "ring", "No Config Set");
+                throwError(msg, "No Config Node Set (If Passing in config variables from msg, Configure a blank config node)", "red", "ring", "No Config Set");
                 return;
             }
 
@@ -189,30 +170,15 @@ module.exports = function(RED) {
                 done();
             }
         });
+
+        function throwError(msg, err, color, shape, status){
+            node.error(err, msg);
+            node.status({fill: color, shape: shape, text: status});
+            msg.payload = err;
+            node.send(msg);
+        }
     }
 
-    function tcpPing(node, msg, ping, userConfig){
-        return new Promise(function(resolve) {
-            ping.on('end', function(stats) {
-                pingResults = stats;
-                // If Ping Fails, throw error and exit
-                if(!(pingResults.success >= 1)){ 
-                    errorMsg = "Error: Host Unreachable - " + userConfig.ipAddress + ":" + userConfig.httpsPort;
-                    throwError(node, msg, errorMsg, "red", "ring", errorMsg); 
-                    resolve(false);
-                }else{
-                    resolve(true);
-                }
-            }).start();
-        });
-    }
-
-    function throwError(node, msg, err, color, shape, status){
-        node.error(err, msg);
-        node.status({fill: color, shape: shape, text: status});
-        msg.payload = err;
-        node.send(msg);
-    }
 
     RED.nodes.registerType("Niagara Obix History", HistoryNode);
 }
