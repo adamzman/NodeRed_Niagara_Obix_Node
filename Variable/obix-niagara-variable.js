@@ -95,7 +95,7 @@ module.exports = function(RED) {
                     if(String(error).includes("401")){throwError(msg, "Error Invalid Credentials: " + error, "red", "dot", "Invalid Credentials"); return;}
                     throwError(msg, "Error with Variable Fetch: " + error, "red", "dot", "Error with Variable Fetch");
                     return;
-                })                
+                })
             }
             else{
                 throwError(msg, "No Config Node Set (If Passing in config variables from msg, Configure a blank config node)", "red", "ring", "No Config Set");

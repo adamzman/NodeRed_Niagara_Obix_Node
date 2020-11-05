@@ -11,7 +11,7 @@ module.exports = function(RED) {
         // Connecting Configuration Node
         node.serverConfig = RED.nodes.getNode(config.serverConfig);
 
-        node.on('input', async function(msg, send, done) {
+        node.on('input', function(msg, send, done) {
 
             if(node.serverConfig){
 
@@ -66,10 +66,11 @@ module.exports = function(RED) {
                         }
                     }
 
-                    // Fetch for Custom Query
-                    try{
-                        url = "https://" + ipAddress + ":" + httpsPort + "/obix/histories/" + path + "/~historyQuery/";
-                        const response = await axios.get(url, { params: historyQuery, auth: {username: username, password: password}, httpsAgent: new https.Agent({ rejectUnauthorized: false }), });
+                    url = "https://" + ipAddress + ":" + httpsPort + "/obix/histories/" + path + "/~historyQuery/";
+
+                    axios.get(url, { params: historyQuery, auth: {username: username, password: password}, httpsAgent: new https.Agent({ rejectUnauthorized: false }), })
+                    .then(function (response) {
+                        // Convert Response to JSON
                         var data = convert.xml2js(response.data, {compact: true, spaces: 4});
 
                         if(data.err){
@@ -77,25 +78,28 @@ module.exports = function(RED) {
                             throwError(msg, "Error in Preset Query Search: " + status, "red", "dot", status);
                             return;
                         }
-                    }catch(error){
+
+                        msg = parseData(msg, data);
+                        node.status({fill:"green",shape:"dot",text:"Success"});
+                        node.send(msg);
+                        
+                    }).catch(function (error) {
                         if(String(error).includes("404")){throwError(msg, "Error Invalid IP/Port: " + error, "red", "dot", "Invalid IP/Port"); return;}
                         if(String(error).includes("401")){throwError(msg, "Error Invalid Credentials: " + error, "red", "dot", "Invalid Credentials"); return;}
-
                         throwError(msg, "Error with Custom History Query Fetch: " + error, "red", "dot", "Error with Custom History Query Fetch");
                         return;
-                    }
-
+                    })
                 }else{
                     historyQuery = "";
                     presetQueryParameter = "";
                     url = "https://" + ipAddress + ":" + httpsPort + "/obix/histories/" + path + "/";
 
                     // Fetch for Preset Query
-                    try{
-                        // Make Fetch to get the preset query
-                        const response = await axios.get(url, { auth: {username: username, password: password}, httpsAgent: new https.Agent({ rejectUnauthorized: false }), });
+                    axios.get(url, { auth: {username: username, password: password}, httpsAgent: new https.Agent({ rejectUnauthorized: false }), })
+                    .then(function (response) {
+                        // Convert Response to JSON
                         var data = convert.xml2js(response.data, {compact: true, spaces: 4});
-
+    
                         // Check if Error Occurred
                         if(data.err){
                             data.err._attributes.is == "obix:BadUriErr" ? status = "Invalid History Path" : status = "Unknown Error";
@@ -116,55 +120,30 @@ module.exports = function(RED) {
                             url = url + presetQueryParameter;
                         }
 
-                        // Fetch with preset query
-                        const response2 = await axios.get(url, { auth: {username: username, password: password}, httpsAgent: new https.Agent({ rejectUnauthorized: false }), });
-                        var data = convert.xml2js(response2.data, {compact: true, spaces: 4});
-
-                    }catch(error){
+                        axios.get(url, { auth: {username: username, password: password}, httpsAgent: new https.Agent({ rejectUnauthorized: false }), })
+                        .then(function (response) {
+                            // Convert Response to JSON
+                            var data = convert.xml2js(response.data, {compact: true, spaces: 4});
+                            msg = parseData(msg, data);
+                            node.status({fill:"green",shape:"dot",text:"Success"});
+                            node.send(msg);
+                            
+                        }).catch(function (error) {
+                            throwError(msg, "Error: " + error, "red", "dot", "Error");
+                            return;
+                        })
+                    }).catch(function (error) {
                         if(String(error).includes("404")){throwError(msg, "Error Invalid IP/Port: " + error, "red", "dot", "Invalid IP/Port"); return;}
                         if(String(error).includes("401")){throwError(msg, "Error Invalid Credentials: " + error, "red", "dot", "Invalid Credentials"); return;}
-
                         throwError(msg, "Error with Preset History Query Fetch: " + error, "red", "dot", "Error with Preset History Query Fetch");
                         return;
-                    }
-                }
-
-                // After the Requests are made, and the JSON data is returned...
-                try{
-                    value = [];
-                    timezone = data.obj.abstime[0]._attributes.tz;
-                    limit = data.obj.int._attributes.val;
-                    start = moment(data.obj.abstime[0]._attributes.val).tz(timezone).format('LLLL z');
-                    end = moment(data.obj.abstime[1]._attributes.val).tz(timezone).format('LLLL z');
-                    
-                    for(i = 0; i < Number(limit); i++){
-                        value[i] = {
-                            "Timestamp": moment(data.obj.list.obj[i].abstime._attributes.val).tz(timezone).format('LLLL z'),
-                            // "Value": String(Number(data.obj.list.obj[i].real._attributes.val).toFixed(1))
-                            "Value": String(data.obj.list.obj[i].real._attributes.val)
-                        }
-                    }
-    
-                    msg.payload = {
-                        "History": path,
-                        "Start": start,
-                        "End": end,
-                        "Limit": limit,
-                        "Timezone": timezone,
-                        "Results": value,
-                    };
-                }catch(error){
-                    throwError(msg, "Error with History Parsing: " + error, "red", "dot", "Error with History Parsing");
-                    return;
+                    })
                 }
             }
             else{
                 throwError(msg, "No Config Node Set (If Passing in config variables from msg, Configure a blank config node)", "red", "ring", "No Config Set");
                 return;
             }
-
-            node.status({fill:"green",shape:"dot",text:"Success"});
-            node.send(msg);
 
             if (done) {
                 done();
@@ -176,6 +155,33 @@ module.exports = function(RED) {
             node.status({fill: color, shape: shape, text: status});
             msg.payload = err;
             node.send(msg);
+        }
+
+        function parseData(msg, data) {
+            // After the Requests are made, and the JSON data is returned...
+            value = [];
+            timezone = data.obj.abstime[0]._attributes.tz;
+            limit = data.obj.int._attributes.val;
+            start = moment(data.obj.abstime[0]._attributes.val).tz(timezone).format('LLLL z');
+            end = moment(data.obj.abstime[1]._attributes.val).tz(timezone).format('LLLL z');
+            
+            for(i = 0; i < Number(limit); i++){
+                value[i] = {
+                    "Timestamp": moment(data.obj.list.obj[i].abstime._attributes.val).tz(timezone).format('LLLL z'),
+                    "Value": String(data.obj.list.obj[i].real._attributes.val)
+                }
+            }
+
+            msg.payload = {
+                "History": path,
+                "Start": start,
+                "End": end,
+                "Limit": limit,
+                "Timezone": timezone,
+                "Results": value,
+            };
+
+            return msg;
         }
     }
 
