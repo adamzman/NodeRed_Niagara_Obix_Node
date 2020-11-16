@@ -72,15 +72,15 @@ module.exports = function(RED) {
                     axios.get(url, { params: context.get('historyQuery'), auth: {username: context.get('username'), password: context.get('password')}, httpsAgent: new https.Agent({ rejectUnauthorized: false }), })
                     .then(function (response) {
                         // Convert Response to JSON
-                        var data = convert.xml2js(response.data, {compact: true, spaces: 4});
+                        var data1 = convert.xml2js(response.data, {compact: true, spaces: 4});
 
-                        if(data.err){
-                            data.err._attributes.is == "obix:BadUriErr" ? status = "Invalid History Path" : status = "Unknown Error";
+                        if(data1.err){
+                            data1.err._attributes.is == "obix:BadUriErr" ? status = "Invalid History Path" : status = "Unknown Error";
                             throwError(msg, "Error in Preset Query Search: " + status, "red", "dot", status);
                             return;
                         }
 
-                        msg = parseData(msg, data);
+                        msg = parseData(msg, data1);
                         node.status({fill:"green",shape:"dot",text:"Success"});
                         node.send(msg);
                         
@@ -100,21 +100,21 @@ module.exports = function(RED) {
                     axios.get(url, { auth: {username: context.get('username'), password: context.get('password')}, httpsAgent: new https.Agent({ rejectUnauthorized: false }), })
                     .then(function (response) {
                         // Convert Response to JSON
-                        var data = convert.xml2js(response.data, {compact: true, spaces: 4});
+                        var data2 = convert.xml2js(response.data, {compact: true, spaces: 4});
     
                         // Check if Error Occurred
-                        if(data.err){
-                            data.err._attributes.is == "obix:BadUriErr" ? status = "Invalid History Path" : status = "Unknown Error";
+                        if(data2.err){
+                            data2.err._attributes.is == "obix:BadUriErr" ? status = "Invalid History Path" : status = "Unknown Error";
                             throwError(msg, "Error in Preset Query Search: " + status, "red", "dot", status);
                             return;
                         }else{
                             // If previous request was successful, then append the preset history query to the new request                            
-                            for(i = 0; i < data.obj.ref.length; i++){
-                                if(data.obj.ref[i]._attributes.name == context.get('presetQuery')){
-                                    presetQueryParameter = data.obj.ref[i]._attributes.href;
+                            for(i = 0; i < data2.obj.ref.length; i++){
+                                if(data2.obj.ref[i]._attributes.name == context.get('presetQuery')){
+                                    presetQueryParameter = data2.obj.ref[i]._attributes.href;
                                     break;
                                 }
-                                if(i >= (data.obj.ref.length - 1)){
+                                if(i >= (data2.obj.ref.length - 1)){
                                     throwError(msg, "Error in Preset Query Search: Invalid History Path", "red", "dot", "Invalid History Path");
                                     return;
                                 }
@@ -125,8 +125,8 @@ module.exports = function(RED) {
                         axios.get(url, { auth: {username: context.get('username'), password: context.get('password')}, httpsAgent: new https.Agent({ rejectUnauthorized: false }), })
                         .then(function (response) {
                             // Convert Response to JSON
-                            var data = convert.xml2js(response.data, {compact: true, spaces: 4});
-                            msg = parseData(msg, data);
+                            var data3 = convert.xml2js(response.data, {compact: true, spaces: 4});
+                            msg = parseData(msg, data3);
                             node.status({fill:"green",shape:"dot",text:"Success"});
                             node.send(msg);
                             
