@@ -87,6 +87,7 @@ module.exports = function(RED) {
                     }).catch(function (error) {
                         if(String(error).includes("404")){throwError(msg, "Error Invalid IP/Port: " + error, "red", "dot", "Invalid IP/Port"); return;}
                         if(String(error).includes("401")){throwError(msg, "Error Invalid Credentials: " + error, "red", "dot", "Invalid Credentials"); return;}
+                        if(String(error).includes("ssl3_get_record")){throwError(msg, "Error: " + error, "red", "dot", "Possibly change port to HTTPS port instead of HTTP"); return;}
                         throwError(msg, "Error with Custom History Query Fetch: " + error, "red", "dot", "Error with Custom History Query Fetch");
                         return;
                     })
