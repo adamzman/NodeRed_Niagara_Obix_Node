@@ -12,8 +12,6 @@ To set up Obix in Niagara...
 <!-- Add Pictures -->
 <!-- Add Examples -->
 
----
-
 # Nodes
 
 ## Niagara Obix Connector Node
@@ -23,8 +21,6 @@ Holds the configuration values for the Niagara Obix Nodes
 - **Password** - Password for the Obix User.
 - **IP Address** - IP Address of the Niagara Station.
 - **HTTPS Port** - HTTPS Port for the Niagara Station... HTTPS must be enabled in the Web Services, and the Port must be exposed on the Niagara Machine (Unless accessing from localhost only).
-
----
 
 ## Niagara Obix History Node
 Returns Histories from the connected Niagara Station
@@ -53,12 +49,10 @@ Each instance of the Niagara Obix Node can have its values inserted dynamically.
   - "lastYear (limit=1000)"
   - "unboundedQuery"
 
-  - **msg.historyQuery** - **Overrides Preset Query**, Used to specify what time period and how many records you want to read from a history... 
-    - Basic Query format `{"start": "2020-10-11T12:40:05-04:00", "end": "2020-10-14T12:40:05-04:00", "limit": "2"}`.
-    - Start and end are the periods of reading data, and the limit is the number of records returned. 
-    - If there are more records than the limit allows, then it returns the number of records starting from the start time.
-
----
+- **msg.historyQuery** - Used to specify what time period and how many records you want to read from a history... 
+  - Basic Query format `{"start": "2020-10-11T12:40:05-04:00", "end": "2020-10-14T12:40:05-04:00", "limit": "2"}`.
+  - Start and end are the periods of reading data, and the limit is the number of records returned. 
+  - If there are more records than the limit allows, then it returns the number of records starting from the start time.
 
 ## Niagara Obix Variable Node
 Returns/Writes points to the Niagara using the obix protocol
@@ -76,4 +70,10 @@ Each instance of the Niagara Obix Node can have its values inserted dynamically.
 - `msg.method` -> Action (msg.method must be either 'GET' (for Reading) or 'POST' (for Writing)) (String)
 - `msg.path` -> Path (String)
 - `msg.value` -> Default Value (String, Boolean, or Number)
- 
+
+## Niagara Obix Watcher Node
+Watches several points and returns an array which includes all the points that changed since the last pull
+
+- **Poll Rate** - The interval at which points are returned. Must be between 1 - 30 seconds.
+- **Search Paths** - Searches through the list of paths that are configured below.
+- **Paths** - The list of paths that are returned on each pull. **After the initial pull, Only values that have changed since the last pull will be returned.** Add a new Path by clicking the "Add New Path" and Delete a path by clicking the "x" next to the path. You can also sort the list by clicking the sort button or dragging the three bars next to the path.

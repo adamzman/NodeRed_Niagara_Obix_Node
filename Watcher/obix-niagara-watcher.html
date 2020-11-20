@@ -121,14 +121,14 @@
 
 <!-- Help -->
 <script type="text/html" data-help-name="Niagara Obix Watcher">
-    <p>A node that connects Node Red to Niagara through Obix Protocol. Returns an Array of History Records from a Niagara History.</p>
+    <p>A node that connects Node Red to Niagara through Obix Protocol. Watches a list of points from a Niagara Station and returns when they change values.</p>
     
     <h3>Details</h3>
-        <div>More Details about the input values can be found <a href="https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/tree/master/Watcher">here</a></div>
+        <div>More Details about this node can be found <a href="https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/tree/master/Watcher">here</a></div>
 
     <h3>Outputs</h3>
         <dl class="message-properties">
             <dt>payload <span class="property-type">object</span></dt>
-            <dd>an Object Containing Information about the Query, and an Array of the Records returned.</dd>
+            <dd>an Array of Points that have changed since the previous pull.</dd>
         </dl>
 </script>
