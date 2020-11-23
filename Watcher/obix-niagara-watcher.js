@@ -206,7 +206,7 @@ module.exports = function (RED) {
                     try {
                         if (err) { throw "Error in TCP Ping"; }
                         if (data.results[0].err) { throw "Host/Port Unavailable"; }
-                        
+
                         var apiPollChangesConfig = {
                             method: 'post',
                             url: createWatchData.obj.op[2]._attributes.href,
@@ -275,6 +275,7 @@ module.exports = function (RED) {
         onCreate(node, config, pollChangesInterval)
 
         this.on('close', function (removed, done) {
+            node.status({ fill: "red", shape: "ring", text: "Disconnected" });
             clearTimeout(newWatchTimeout1);
             clearInterval(pollChangesInterval);
             done();

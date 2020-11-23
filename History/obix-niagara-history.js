@@ -1,172 +1,21 @@
-module.exports = function(RED) {
-    function HistoryNode(config) {
-        RED.nodes.createNode(this,config);
-        const node = this;
-        var context = this.context();
-        const axios = require("axios");
-        const https = require('https');
-        const convert = require('xml-js');
-        const moment = require('moment-timezone');
+module.exports = function (RED) {
 
-        // Connecting Configuration Node
-        node.serverConfig = RED.nodes.getNode(config.serverConfig);
+    const axios = require("axios");
+    const convert = require('xml-js');
+    const https = require('https');
+    const tcpp = require('tcp-ping');
+    const moment = require('moment-timezone');
 
-        node.on('input', function(msg, send, done) {
-
-            if(node.serverConfig){
-
-                var presetOptions = ["yesterday", "last24Hours", "weekToDate", "lastWeek", "last7Days", "monthToDate", "lastMonth", "yearToDate (limit=1000)", "lastYear (limit=1000)", "unboundedQuery"];
-                
-                // Setting all variables if passed in, if not, we will use the preset values
-                context.set('username', msg.username || node.serverConfig.username);
-                context.set('password', msg.password || node.serverConfig.password);
-                context.set('ipAddress', msg.ipAddress || node.serverConfig.host);
-                context.set('httpsPort', msg.httpsPort || node.serverConfig.port);
-                context.set('path', msg.path || config.path);
-                context.set('historyQuery', msg.historyQuery || null);
-                context.set('presetQuery', msg.presetQuery || config.presetQuery);
-                const presetCheck = (val) => val === context.get('presetQuery');
-
-                
-                // If missing a configuration variable, return error
-                if(!context.get('username')){ throwError(msg, "Invalid Parameters : Missing Obix Username", "red", "ring", "Missing Username"); return; }
-                if(!context.get('password')){ throwError(msg, "Invalid Parameters : Missing Obix Password", "red", "ring", "Missing Password"); return; }
-                if(!context.get('ipAddress')){ throwError(msg, "Invalid Parameters : Missing Niagara IP Address", "red", "ring", "Missing IP Address"); return; }
-                if(!context.get('httpsPort')){ throwError(msg, "Invalid Parameters : Missing Niagara HTTPS Port", "red", "ring", "Missing HTTPS Port"); return; }
-                if(!context.get('path')){ throwError(msg, "Invalid Parameters : Missing History Path", "red", "ring", "Missing History Path"); return; }
-                if(!presetOptions.some(presetCheck)){ throwError(msg, "Invalid Parameters : PresetQuery Value Invalid", "red", "ring", "PresetQuery Value Invalid"); return; }
-                
-                // Slice '/' from the path if it exists
-                context.get('path').charAt(context.get('path').length - 1) == '/' ? context.set('path', context.get('path').slice(0, -1)) : null;
-                context.get('path').charAt(0) == '/' ? context.set('path', context.get('path').slice(1)) : null;
-
-                // Check if passed in custom history query, if not, we will use the preset that is selected
-                if(context.get('historyQuery')){
-
-                    // Check Custom Query Dates... Ensure they are valid
-                    if(context.get('historyQuery.start')){
-                        // Format into Date and check if it is valid
-                        start = new Date(context.get('historyQuery.start'));
-                        if(start.getTime()){
-                            // If valid, set to the proper format needed by the API
-                            context.set('historyQuery.start', start.toISOString());
-                        }else{
-                            throwError(msg, "HistoryQuery Start is an Invalid Timestamp", "red", "ring", "HistoryQuery Start is an Invalid Timestamp");
-                            return;
-                        }
-                    }
-                    if(context.get('historyQuery.end')){
-                        // Format into Date and check if it is valid
-                        end = new Date(context.get('historyQuery.end'));
-                        if(end.getTime()){
-                            // If valid, set to the proper format needed by the API
-                            context.set('historyQuery.end', end.toISOString());
-                        }else{
-                            throwError(msg, "HistoryQuery End is an Invalid Timestamp", "red", "ring", "HistoryQuery End is an Invalid Timestamp");
-                            return;
-                        }
-                    }
-
-                    url = "https://" + context.get('ipAddress') + ":" + context.get('httpsPort') + "/obix/histories/" + context.get('path') + "/~historyQuery/";
-
-                    axios.get(url, { params: context.get('historyQuery'), auth: {username: context.get('username'), password: context.get('password')}, httpsAgent: new https.Agent({ rejectUnauthorized: false }), })
-                    .then(function (response) {
-                        // Convert Response to JSON
-                        var data1 = convert.xml2js(response.data, {compact: true, spaces: 4});
-
-                        if(data1.err){
-                            data1.err._attributes.is == "obix:BadUriErr" ? status = "Invalid History Path" : status = "Unknown Error";
-                            throwError(msg, "Error in Preset Query Search: " + status, "red", "dot", status);
-                            return;
-                        }
-
-                        msg = parseData(msg, data1);
-                        node.status({fill:"green",shape:"dot",text:"Success"});
-                        node.send(msg);
-                        
-                    }).catch(function (error) {
-                        if(String(error).includes("404")){throwError(msg, "Error Invalid IP/Port: " + error, "red", "dot", "Invalid IP/Port"); return;}
-                        if(String(error).includes("401")){throwError(msg, "Error Invalid Credentials: " + error, "red", "dot", "Invalid Credentials"); return;}
-                        if(String(error).includes("ssl3_get_record")){throwError(msg, "Error: " + error, "red", "dot", "Possibly change port to HTTPS port instead of HTTP"); return;}
-                        throwError(msg, "Error with Custom History Query Fetch: " + error, "red", "dot", "Error with Custom History Query Fetch");
-                        return;
-                    })
-                }else{
-                    context.set('historyQuery', "");
-                    presetQueryParameter = "";
-                    url = "https://" + context.get('ipAddress') + ":" + context.get('httpsPort') + "/obix/histories/" + context.get('path') + "/";
-
-                    // Fetch for Preset Query
-                    axios.get(url, { auth: {username: context.get('username'), password: context.get('password')}, httpsAgent: new https.Agent({ rejectUnauthorized: false }), })
-                    .then(function (response) {
-                        // Convert Response to JSON
-                        var data2 = convert.xml2js(response.data, {compact: true, spaces: 4});
-    
-                        // Check if Error Occurred
-                        if(data2.err){
-                            data2.err._attributes.is == "obix:BadUriErr" ? status = "Invalid History Path" : status = "Unknown Error";
-                            throwError(msg, "Error in Preset Query Search: " + status, "red", "dot", status);
-                            return;
-                        }else{
-                            // If previous request was successful, then append the preset history query to the new request                            
-                            for(i = 0; i < data2.obj.ref.length; i++){
-                                if(data2.obj.ref[i]._attributes.name == context.get('presetQuery')){
-                                    presetQueryParameter = data2.obj.ref[i]._attributes.href;
-                                    break;
-                                }
-                                if(i >= (data2.obj.ref.length - 1)){
-                                    throwError(msg, "Error in Preset Query Search: Invalid History Path", "red", "dot", "Invalid History Path");
-                                    return;
-                                }
-                            }
-                            url = url + presetQueryParameter;
-                        }
-
-                        axios.get(url, { auth: {username: context.get('username'), password: context.get('password')}, httpsAgent: new https.Agent({ rejectUnauthorized: false }), })
-                        .then(function (response) {
-                            // Convert Response to JSON
-                            var data3 = convert.xml2js(response.data, {compact: true, spaces: 4});
-                            msg = parseData(msg, data3);
-                            node.status({fill:"green",shape:"dot",text:"Success"});
-                            node.send(msg);
-                            
-                        }).catch(function (error) {
-                            throwError(msg, "Error: " + error, "red", "dot", "Error");
-                            return;
-                        })
-                    }).catch(function (error) {
-                        if(String(error).includes("404")){throwError(msg, "Error Invalid IP/Port: " + error, "red", "dot", "Invalid IP/Port"); return;}
-                        if(String(error).includes("401")){throwError(msg, "Error Invalid Credentials: " + error, "red", "dot", "Invalid Credentials"); return;}
-                        if(String(error).includes("ssl3_get_record")){throwError(msg, "Error: " + error, "red", "dot", "Possibly change port to HTTPS port instead of HTTP"); return;}
-                        throwError(msg, "Error with Preset History Query Fetch: " + error, "red", "dot", "Error with Preset History Query Fetch");
-                        return;
-                    })
-                }
-            }
-            else{
-                throwError(msg, "No Config Node Set (If Passing in config variables from msg, Configure a blank config node)", "red", "ring", "No Config Set");
-                return;
-            }
-
-            if (done) {
-                done();
-            }
-        });
-
-        function throwError(msg, err, color, shape, status){
-            node.error(err, msg);
-            node.status({fill: color, shape: shape, text: status});
-        }
-
-        function parseData(msg, data) {
-            // After the Requests are made, and the JSON data is returned...
+    function parseData(msg, data, path) {
+        // After the Requests are made, and the JSON data is returned...
+        try {
             value = [];
             timezone = data.obj.abstime[0]._attributes.tz;
             limit = data.obj.int._attributes.val;
             start = moment(data.obj.abstime[0]._attributes.val).tz(timezone).format('LLLL z');
             end = moment(data.obj.abstime[1]._attributes.val).tz(timezone).format('LLLL z');
-            
-            for(i = 0; i < Number(limit); i++){
+
+            for (i = 0; i < Number(limit); i++) {
                 value[i] = {
                     "Timestamp": moment(data.obj.list.obj[i].abstime._attributes.val).tz(timezone).format('LLLL z'),
                     "Value": String(data.obj.list.obj[i].real._attributes.val)
@@ -174,7 +23,7 @@ module.exports = function(RED) {
             }
 
             msg.payload = {
-                "History": context.get('path'),
+                "History": path,
                 "Start": start,
                 "End": end,
                 "Limit": limit,
@@ -183,9 +32,153 @@ module.exports = function(RED) {
             };
 
             return msg;
+        } catch (error) {
+            msg.payload = "Error in History Parsing";
+            console.log(error);
+            return msg;
         }
     }
 
+    function throwError(node, msg, err, status) {
+        node.status({ fill: "red", shape: "dot", text: status });
+        node.error(err, msg);
+    }
 
+    function onInput(node, config, msg) {
+
+        var url;
+
+        // Variables
+        try {
+            var presetOptions = ["yesterday", "last24Hours", "weekToDate", "lastWeek", "last7Days", "monthToDate", "lastMonth", "yearToDate (limit=1000)", "lastYear (limit=1000)", "unboundedQuery"];
+
+            // Setting all variables if passed in, if not, we will use the preset values
+            var username = msg.username || node.serverConfig.username;
+            var password = msg.password || node.serverConfig.password;
+            var ipAddress = msg.ipAddress || node.serverConfig.host;
+            var httpsPort = msg.httpsPort || node.serverConfig.port;
+            var path = msg.path || config.path;
+            var historyQuery = msg.historyQuery || null;
+            var presetQuery = msg.presetQuery || config.presetQuery;
+            const presetCheck = (val) => val === presetQuery;
+
+            // If missing a configuration variable, return error
+            if (!username) { throw "Missing Username"; }
+            if (!password) { throw "Missing Password"; }
+            if (!ipAddress) { throw "Missing IP Address"; }
+            if (!httpsPort) { throw "Missing HTTPS Port"; }
+            if (!path) { throw "Missing History Path"; }
+            if (!presetOptions.some(presetCheck)) { throw "PresetQuery Value Invalid"; }
+
+            // Slice '/' from the path if it exists
+            path.charAt(path.length - 1) == '/' ? path = path.slice(0, -1) : null;
+            path.charAt(0) == '/' ? path = path.slice(1) : null;
+
+        } catch (error) {
+            throwError(node, msg, error, error);
+            return;
+        }
+
+        tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 500, "attempts": 1 }, async function (err, data) {
+            try {
+                // Check if passed in custom history query, if not, we will use the preset that is selected
+                if (historyQuery) {
+                    try {
+                        // Check Custom Query Dates... Ensure they are valid
+                        if (historyQuery.start) {
+                            // Format into Date and check if it is valid
+                            start = new Date(historyQuery.start);
+                            if (start.getTime()) { historyQuery.start = start.toISOString(); }
+                            else { throw "HistoryQuery Start is an Invalid Timestamp"; }
+                        }
+                        if (historyQuery.end) {
+                            // Format into Date and check if it is valid
+                            end = new Date(historyQuery.end);
+                            if (end.getTime()) { historyQuery.end = end.toISOString(); }
+                            else { throw "HistoryQuery End is an Invalid Timestamp"; }
+                        }
+
+                        url = "https://" + ipAddress + ":" + httpsPort + "/obix/histories/" + path + "/~historyQuery/";
+
+                        const historyQueryResponse = await axios.get(url, { params: historyQuery, auth: { username: username, password: password }, httpsAgent: new https.Agent({ rejectUnauthorized: false }), })
+                        const historyQueryData = convert.xml2js(historyQueryResponse.data, { compact: true, spaces: 4 });
+
+                        if (historyQueryData.err) {
+                            historyQueryData.err._attributes.is == "obix:BadUriErr" ? status = "Invalid History Path" : status = "Unknown Error";
+                            throw status;
+                        }
+
+                        msg = parseData(msg, historyQueryData, path);
+                        if (msg.payload == "Error in History Parsing") { throw "Error in History Parsing" }
+                        node.status({ fill: "green", shape: "dot", text: "Success" });
+                        node.send(msg);
+                    } catch (error) {
+                        if (String(error).includes("404")) { throwError(msg, "Error Invalid IP/Port: " + error, "red", "dot", "Invalid IP/Port"); return; }
+                        if (String(error).includes("401")) { throwError(msg, "Error Invalid Credentials: " + error, "red", "dot", "Invalid Credentials"); return; }
+                        if (String(error).includes("ssl3_get_record")) { throwError(msg, "Error: " + error, "red", "dot", "Possibly change port to HTTPS port instead of HTTP"); return; }
+                        throwError(msg, "Error with Custom History Query Fetch: " + error, "red", "dot", "Error with Custom History Query Fetch");
+                        return;
+                    }
+                } else {
+                    try {
+                        historyQuery = "";
+                        presetQueryParameter = "";
+                        url = "https://" + ipAddress + ":" + httpsPort + "/obix/histories/" + path + "/";
+
+                        const presetQueryResponse = await axios.get(url, { auth: { username: username, password: password }, httpsAgent: new https.Agent({ rejectUnauthorized: false }), });
+                        const presetQueryData = convert.xml2js(presetQueryResponse.data, { compact: true, spaces: 4 });
+
+                        // Check if Error Occurred
+                        if (presetQueryData.err) {
+                            presetQueryData.err._attributes.is == "obix:BadUriErr" ? status = "Invalid History Path" : status = "Unknown Error";
+                            throw status;
+                        } else {
+                            // If previous request was successful, then append the preset history query to the new request                            
+                            for (i = 0; i < presetQueryData.obj.ref.length; i++) {
+                                if (presetQueryData.obj.ref[i]._attributes.name == presetQuery) {
+                                    presetQueryParameter = presetQueryData.obj.ref[i]._attributes.href;
+                                    break;
+                                }
+                                if (i >= (presetQueryData.obj.ref.length - 1)) { throw "Invalid History Path"; }
+                            }
+                            url = url + presetQueryParameter;
+                        }
+
+                        try {
+                            const presetQueryResponse2 = await axios.get(url, { auth: { username: username, password: password }, httpsAgent: new https.Agent({ rejectUnauthorized: false }), })
+                            const presetQueryData2 = convert.xml2js(presetQueryResponse2.data, { compact: true, spaces: 4 });
+
+                            msg = parseData(msg, presetQueryData2, path);
+                            if (msg.payload == "Error in History Parsing") { throw "Error in History Parsing" }
+                            node.status({ fill: "green", shape: "dot", text: "Success" });
+                            node.send(msg);
+                        } catch (error) {
+                            throwError(node, msg, error, error);
+                            return;
+                        }
+                    } catch (error) {
+                        throwError(node, msg, error, error);
+                        return;
+                    }
+                }
+            } catch (error) {
+                throwError(node, msg, error, error);
+                return;
+            }
+        });
+    }
+
+    function HistoryNode(config) {
+
+        RED.nodes.createNode(this, config);
+
+        var node = this;
+        node.serverConfig = RED.nodes.getNode(config.serverConfig);
+
+        node.on('input', function (msg, send, done) {
+            onInput(node, config, msg);
+        });
+        node.status({ fill: "blue", shape: "dot", text: "Ready" });
+    }
     RED.nodes.registerType("Niagara Obix History", HistoryNode);
 }
