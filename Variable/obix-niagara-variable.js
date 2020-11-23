@@ -3,7 +3,7 @@ module.exports = function (RED) {
     const axios = require("axios");
     const convert = require('xml-js');
     const https = require('https');
-    var tcpp = require('tcp-ping');
+    const tcpp = require('tcp-ping');
 
     function throwError(node, msg, err, status) {
         node.status({ fill: "red", shape: "dot", text: status });
