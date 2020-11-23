@@ -28,7 +28,7 @@ module.exports = function (RED) {
             if (!ipAddress) { throw "Missing IP Address"; }
             if (!httpsPort) { throw "Missing HTTPS Port"; }
             if (!path) { throw "Missing Variable Path"; }
-            if ((value) && (action == "POST")) { throw "Missing Write Value"; }
+            if ((!value) && (action == "POST")) { throw "Missing Write Value"; }
 
             // Slice '/' from the path if it exists
             path.charAt(path.length - 1) == '/' ? path = path.slice(0, -1) : null;
