@@ -39,8 +39,8 @@ module.exports = function (RED) {
         }
     }
 
-    function throwError(node, msg, err, status) {
-        node.status({ fill: "red", shape: "dot", text: status });
+    function throwError(node, msg, err, status1) {
+        node.status({ fill: "red", shape: "dot", text: status1 });
         node.error(err, msg);
     }
 
@@ -109,14 +109,14 @@ module.exports = function (RED) {
                         }
 
                         msg = parseData(msg, historyQueryData, path);
-                        if (msg.payload == "Error in History Parsing") { throw "Error in History Parsing" }
+                        if (msg.payload == "Error in History Parsing") { throw "Error in History Parsing"; }
                         node.status({ fill: "green", shape: "dot", text: "Success" });
                         node.send(msg);
                     } catch (error) {
-                        if (String(error).includes("404")) { throwError(msg, "Error Invalid IP/Port: " + error, "red", "dot", "Invalid IP/Port"); return; }
-                        if (String(error).includes("401")) { throwError(msg, "Error Invalid Credentials: " + error, "red", "dot", "Invalid Credentials"); return; }
-                        if (String(error).includes("ssl3_get_record")) { throwError(msg, "Error: " + error, "red", "dot", "Possibly change port to HTTPS port instead of HTTP"); return; }
-                        throwError(msg, "Error with Custom History Query Fetch: " + error, "red", "dot", "Error with Custom History Query Fetch");
+                        if (String(error).includes("404")) { error = "Invalid IP/Port"; }
+                        if (String(error).includes("401")) { error = "Invalid Credentials"; }
+                        if (String(error).includes("ssl3_get_record")) { error = "Possibly change port to HTTPS port instead of HTTP"; }
+                        throwError(node, msg, error, error);
                         return;
                     }
                 } else {
