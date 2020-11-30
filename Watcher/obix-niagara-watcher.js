@@ -193,6 +193,7 @@ module.exports = function (RED) {
 
                 // Send Poll Refresh Values
                 msg = {
+                    reset: true,
                     payload: values
                 }
                 node.send(msg);
