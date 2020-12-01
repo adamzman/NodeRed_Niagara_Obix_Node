@@ -5,6 +5,7 @@ module.exports = function (RED) {
     const https = require('https');
     const tcpp = require('tcp-ping');
     var newWatchTimeout1;
+    var pollChangesInterval;
 
     function parseValue(value) {
         try {
@@ -21,14 +22,14 @@ module.exports = function (RED) {
         }
     }
 
-    function throwError(node, config, pollChangesInterval, msg, err, status) {
+    function throwError(node, config, msg, err, status) {
         clearInterval(pollChangesInterval);
         node.status({ fill: "red", shape: "dot", text: status });
         node.error(err, msg);
-        newWatchTimeout1 = setTimeout(function () { onCreate(node, config, pollChangesInterval); }, 10000);
+        newWatchTimeout1 = setTimeout(function () { onCreate(node, config); }, 10000);
     }
 
-    function onCreate(node, config, pollChangesInterval) {
+    function onCreate(node, config) {
 
         msg = {}
 
@@ -58,18 +59,18 @@ module.exports = function (RED) {
                 paths[i] = path;
             }
         } catch (error) {
-            throwError(node, config, pollChangesInterval, msg, error, error);
+            throwError(node, config, msg, error, error);
             return;
         }
 
         tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 500, "attempts": 1 }, async function (err, data) {
 
             if (err) {
-                throwError(node, config, pollChangesInterval, msg, "Error in TCP Ping: " + err, "Error in TCP Ping");
+                throwError(node, config, msg, "Error in TCP Ping: " + err, "Error in TCP Ping");
                 return;
             }
             if (data.results[0].err) {
-                throwError(node, config, pollChangesInterval, msg, "Host/Port Unavailable", "Host/Port Unavailable");
+                throwError(node, config, msg, "Host/Port Unavailable", "Host/Port Unavailable");
                 return;
             }
 
@@ -96,7 +97,7 @@ module.exports = function (RED) {
                 var watchNum = watchNumUrl[watchNumUrl.length - 2];
                 node.status({ fill: "green", shape: "dot", text: "Watch Created: " + watchNum });
             } catch (error) {
-                throwError(node, config, pollChangesInterval, msg, error, error);
+                throwError(node, config, msg, error, error);
                 return;
             }
 
@@ -142,7 +143,7 @@ module.exports = function (RED) {
                     return;
                 }
             } catch (error) {
-                throwError(node, config, pollChangesInterval, msg, error, error);
+                throwError(node, config, msg, error, error);
                 return;
             }
 
@@ -198,7 +199,7 @@ module.exports = function (RED) {
                 }
                 node.send(msg);
             } catch (error) {
-                throwError(node, config, pollChangesInterval, msg, error, error);
+                throwError(node, config, msg, error, error);
                 return;
             }
 
@@ -257,7 +258,7 @@ module.exports = function (RED) {
                         };
                         node.send(msg);
                     } catch (error) {
-                        throwError(node, config, pollChangesInterval, msg, error, error);
+                        throwError(node, config, msg, error, error);
                         return;
                     }
                 });
@@ -271,9 +272,8 @@ module.exports = function (RED) {
 
         var node = this;
         node.serverConfig = RED.nodes.getNode(config.serverConfig);
-        var pollChangesInterval;
 
-        onCreate(node, config, pollChangesInterval)
+        onCreate(node, config)
 
         this.on('close', function (removed, done) {
             node.status({ fill: "red", shape: "ring", text: "Disconnected" });
