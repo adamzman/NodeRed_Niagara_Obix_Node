@@ -79,7 +79,7 @@ module.exports = function (RED) {
             return;
         }
 
-        tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 500, "attempts": 1 }, async function (err, data) {
+        tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 1000, "attempts": 1 }, async function (err, data) {
             try {
                 // Check if passed in custom history query, if not, we will use the preset that is selected
                 if (historyQuery) {

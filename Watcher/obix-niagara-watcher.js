@@ -63,7 +63,7 @@ module.exports = function (RED) {
             return;
         }
 
-        tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 500, "attempts": 1 }, async function (err, data) {
+        tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 1000, "attempts": 1 }, async function (err, data) {
 
             if (err) {
                 throwError(node, config, msg, "Error in TCP Ping: " + err, "Error in TCP Ping");
@@ -204,7 +204,7 @@ module.exports = function (RED) {
             }
 
             pollChangesInterval = setInterval(async function () {
-                tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 500, "attempts": 1 }, async function (err, data) {
+                tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 1000, "attempts": 1 }, async function (err, data) {
                     try {
                         if (err) { throw "Error in TCP Ping"; }
                         if (data.results[0].err) { throw "Host/Port Unavailable"; }
