@@ -7,7 +7,7 @@
             name: {value: ""},
             serverConfig: {value: "", type: "Niagara Obix Connector"},
             pollRate: {value: 10, required: true, validate: function(v) {
-                return v <= 30 && v >= 1;
+                return v <= 30 && v >= 5;
             }},
             search: {value: ""},
             rules: {value:[], validate: function(v) {

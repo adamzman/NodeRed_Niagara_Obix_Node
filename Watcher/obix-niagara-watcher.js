@@ -63,14 +63,14 @@ module.exports = function (RED) {
             return;
         }
 
-        tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 1000, "attempts": 1 }, async function (err, data) {
+        tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 2000, "attempts": 2 }, async function (err, data) {
 
             if (err) {
                 throwError(node, config, msg, "Error in TCP Ping: " + err, "Error in TCP Ping");
                 return;
             }
             if (data.results[0].err) {
-                throwError(node, config, msg, "Host/Port Unavailable", "Host/Port Unavailable");
+                throwError(node, config, msg, "Host/Port Unavailable - Failed to Ping for Initial Watch Creation", "Host/Port Unavailable");
                 return;
             }
 
@@ -204,10 +204,10 @@ module.exports = function (RED) {
             }
 
             pollChangesInterval = setInterval(async function () {
-                tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 1000, "attempts": 1 }, async function (err, data) {
+                tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 2000, "attempts": 2 }, async function (err, data) {
                     try {
                         if (err) { throw "Error in TCP Ping"; }
-                        if (data.results[0].err) { throw "Host/Port Unavailable"; }
+                        if (data.results[0].err) { throw "Host/Port Unavailable - Poll Change"; }
 
                         var apiPollChangesConfig = {
                             method: 'post',

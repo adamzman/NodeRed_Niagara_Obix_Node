@@ -39,7 +39,7 @@ module.exports = function (RED) {
             return;
         }
 
-        tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 1000, "attempts": 1 }, async function (err, data) {
+        tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 2000, "attempts": 2 }, async function (err, data) {
             if (err) { throwError(node, msg, "Error in TCP Ping: " + err, "Error in TCP Ping"); return; }
             if (data.results[0].err) { throwError(node, msg, "TCP Ping Failed: Host/Port Invalid", "Host/Port Unavailable"); return; }
 
