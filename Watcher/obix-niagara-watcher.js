@@ -4,8 +4,6 @@ module.exports = function (RED) {
     const convert = require('xml-js');
     const https = require('https');
     const tcpp = require('tcp-ping');
-    var newWatchTimeout1;
-    var pollChangesInterval;
 
     function parseValue(value) {
         try {
@@ -23,15 +21,15 @@ module.exports = function (RED) {
     }
 
     function throwError(node, config, msg, err, status) {
-        clearInterval(pollChangesInterval);
+        node.pollChangesInterval ? clearInterval(node.pollChangesInterval) : null;
         node.status({ fill: "red", shape: "dot", text: status });
         node.error(err, msg);
-        newWatchTimeout1 = setTimeout(function () { onCreate(node, config); }, 10000);
+        node.newWatchTimeout1 = setTimeout(function () { onCreate(node, config); }, 10000);
     }
 
     function onCreate(node, config) {
 
-        msg = {}
+        msg = {};
 
         // Set Variables
         try {
@@ -203,7 +201,7 @@ module.exports = function (RED) {
                 return;
             }
 
-            pollChangesInterval = setInterval(async function () {
+            node.pollChangesInterval = setInterval(async function () {
                 tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 2000, "attempts": 2 }, async function (err, data) {
                     try {
                         if (err) { throw "Error in TCP Ping"; }
@@ -277,8 +275,8 @@ module.exports = function (RED) {
 
         this.on('close', function (removed, done) {
             node.status({ fill: "red", shape: "ring", text: "Disconnected" });
-            clearTimeout(newWatchTimeout1);
-            clearInterval(pollChangesInterval);
+            node.newWatchTimeout1 ? clearTimeout(node.newWatchTimeout1) : null;
+            node.pollChangesInterval ? clearInterval(node.pollChangesInterval) : null;
             done();
         });
 
