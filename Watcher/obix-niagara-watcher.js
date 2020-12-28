@@ -21,9 +21,12 @@ module.exports = function (RED) {
     }
 
     function throwError(node, config, msg, err, status) {
+        node.newWatchTimeout1 ? clearTimeout(node.newWatchTimeout1) : null;
         node.pollChangesInterval ? clearInterval(node.pollChangesInterval) : null;
+
         node.status({ fill: "red", shape: "dot", text: status });
         node.error(err, msg);
+
         node.newWatchTimeout1 = setTimeout(function () { onCreate(node, config); }, 10000);
     }
 
@@ -61,7 +64,8 @@ module.exports = function (RED) {
             return;
         }
 
-        tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 2000, "attempts": 2 }, async function (err, data) {
+        // Initial Connection Pings
+        tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 4000, "attempts": 1 }, async function (err, data) {
 
             if (err) {
                 throwError(node, config, msg, "Error in TCP Ping: " + err, "Error in TCP Ping");
@@ -202,7 +206,7 @@ module.exports = function (RED) {
             }
 
             node.pollChangesInterval = setInterval(async function () {
-                tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 2000, "attempts": 2 }, async function (err, data) {
+                tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 4000, "attempts": 1 }, async function (err, data) {
                     try {
                         if (err) { throw "Error in TCP Ping"; }
                         if (data.results[0].err) { throw "Host/Port Unavailable - Poll Change"; }
@@ -275,8 +279,8 @@ module.exports = function (RED) {
 
         this.on('close', function (removed, done) {
             node.status({ fill: "red", shape: "ring", text: "Disconnected" });
-            node.newWatchTimeout1 ? clearTimeout(node.newWatchTimeout1) : null;
             node.pollChangesInterval ? clearInterval(node.pollChangesInterval) : null;
+            node.newWatchTimeout1 ? clearTimeout(node.newWatchTimeout1) : null;
             done();
         });
 
