@@ -4,6 +4,7 @@ module.exports = function(RED) {
         this.displayName = n.displayName;
         this.username = n.username;
         this.password = n.password;
+        this.mode = n.mode;
         this.host = n.host;
         this.port = n.port;
     }

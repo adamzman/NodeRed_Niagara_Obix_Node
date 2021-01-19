@@ -24,6 +24,7 @@ module.exports = function (RED) {
         node.newWatchTimeout1 ? clearTimeout(node.newWatchTimeout1) : null;
         node.pollChangesInterval ? clearInterval(node.pollChangesInterval) : null;
 
+        if(typeof status != "string") status = "Error - Ensure HTTPS/HTTP is available, and configured Port is used with proper Connection Mode";
         node.status({ fill: "red", shape: "dot", text: status });
         node.error(err, msg);
 
@@ -40,6 +41,7 @@ module.exports = function (RED) {
             var username = node.serverConfig.username;
             var password = node.serverConfig.password;
             var ipAddress = node.serverConfig.host;
+            var httpMode = node.serverConfig.mode;
             var httpsPort = node.serverConfig.port;
             var pollRate = config.pollRate;
             var paths = config.rules;
@@ -48,6 +50,7 @@ module.exports = function (RED) {
             if (!username) { throw "Missing Username"; }
             if (!password) { throw "Missing Password"; }
             if (!ipAddress) { throw "Missing IP Address"; }
+            if (!httpMode) { throw "Select HTTP or HTTPS"; }
             if (!httpsPort) { throw "Missing HTTPS Port"; }
             if (!pollRate || !(pollRate <= 30 && pollRate >= 1)) { throw "Invalid/Missing PollRate"; }
             if (!paths) { throw "Missing a Path" }
@@ -82,7 +85,7 @@ module.exports = function (RED) {
             try {
                 var apiCallConfig = {
                     method: 'post',
-                    url: 'https://' + ipAddress + ':' + httpsPort + '/obix/watchService/make',
+                    url: httpMode + '://' + ipAddress + ':' + httpsPort + '/obix/watchService/make',
                     auth: {
                         username: username,
                         password: password

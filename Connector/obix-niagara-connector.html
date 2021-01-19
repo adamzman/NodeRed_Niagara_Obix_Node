@@ -1,15 +1,16 @@
 <script type="text/javascript">
-    RED.nodes.registerType('Niagara Obix Connector',{
+    RED.nodes.registerType('Niagara Obix Connector', {
         category: 'config',
         defaults: {
-            displayName: {value: ""},
-            username: {value: ""},
-            password: {value: ""},
-            host: {value: ""},
-            port: {value: ""},
+            displayName: { value: "" },
+            username: { value: "" },
+            password: { value: "" },
+            host: { value: "" },
+            mode: { value: "" },
+            port: { value: "" },
         },
-        label: function() {
-            return this.displayName ? this.displayName : ((this.host || this.port) ? this.host+":"+this.port : this.username) || "Undefined";
+        label: function () {
+            return this.displayName ? this.displayName : ((this.host || this.port) ? this.host + ":" + this.port : this.username) || "Undefined";
         }
     });
 </script>
@@ -29,10 +30,18 @@
     </div>
     <div class="form-row">
         <label for="node-config-input-host" style="width: 100%"><i class="fa fa-globe"></i> Niagara IP Address:</label><br/>
-        <input type="text" id="node-config-input-host" placeholder="ex. 192.168.10.250">
+        <input type="text" id="node-config-input-host" placeholder="ex. 192.168.1.10">
     </div>
     <div class="form-row">
-        <label for="node-config-input-port" style="width: 100%"><i class="fa fa-shield"></i> Niagara HTTPS Port:</label><br/>
+        <label for="node-config-input-mode" style="width: 100%"><i class="fa fa-shield"></i> Connector Security Mode:</label><br/>
+        <select name="node-config-input-mode" id="node-config-input-mode">
+            <option value="https">HTTPS</option>
+            <option value="http">HTTP</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-port" style="width: 100%"><i class="fa fa-shield"></i> Niagara HTTPS/HTTP Port:</label><br/>
         <input type="number" id="node-config-input-port" placeholder="ex. 8080">
     </div>
+    <div class="form-tips"><b>Tip:</b> The ObixNetwork Driver must be under the Drivers in the Niagara Tree and include a user with access through HTTPBasic.</div>
 </script>

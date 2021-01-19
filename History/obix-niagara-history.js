@@ -40,6 +40,7 @@ module.exports = function (RED) {
     }
 
     function throwError(node, msg, err, status1) {
+        if(typeof status1 != "string") status1 = "Error - Ensure HTTPS/HTTP is available, and configured Port is used with proper Connection Mode";
         node.status({ fill: "red", shape: "dot", text: status1 });
         node.error(err, msg);
     }
@@ -56,6 +57,7 @@ module.exports = function (RED) {
             var username = msg.username || node.serverConfig.username;
             var password = msg.password || node.serverConfig.password;
             var ipAddress = msg.ipAddress || node.serverConfig.host;
+            var httpMode = msg.mode || node.serverConfig.mode;
             var httpsPort = msg.httpsPort || node.serverConfig.port;
             var path = msg.path || config.path;
             var historyQuery = msg.historyQuery || null;
@@ -66,6 +68,7 @@ module.exports = function (RED) {
             if (!username) { throw "Missing Username"; }
             if (!password) { throw "Missing Password"; }
             if (!ipAddress) { throw "Missing IP Address"; }
+            if (!httpMode) { throw "Select HTTP or HTTPS"; }
             if (!httpsPort) { throw "Missing HTTPS Port"; }
             if (!path) { throw "Missing History Path"; }
             if (!presetOptions.some(presetCheck)) { throw "PresetQuery Value Invalid"; }
@@ -73,6 +76,7 @@ module.exports = function (RED) {
             // Slice '/' from the path if it exists
             path.charAt(path.length - 1) == '/' ? path = path.slice(0, -1) : null;
             path.charAt(0) == '/' ? path = path.slice(1) : null;
+            node.status({ fill: "blue", shape: "ring", text: "Pulling..." });
 
         } catch (error) {
             throwError(node, msg, error, error);
@@ -98,7 +102,7 @@ module.exports = function (RED) {
                             else { throw "HistoryQuery End is an Invalid Timestamp"; }
                         }
 
-                        url = "https://" + ipAddress + ":" + httpsPort + "/obix/histories/" + path + "/~historyQuery/";
+                        url = httpMode + "://" + ipAddress + ":" + httpsPort + "/obix/histories/" + path + "/~historyQuery/";
 
                         const historyQueryResponse = await axios.get(url, { params: historyQuery, auth: { username: username, password: password }, httpsAgent: new https.Agent({ rejectUnauthorized: false }), })
                         const historyQueryData = convert.xml2js(historyQueryResponse.data, { compact: true, spaces: 4 });
@@ -123,7 +127,7 @@ module.exports = function (RED) {
                     try {
                         historyQuery = "";
                         presetQueryParameter = "";
-                        url = "https://" + ipAddress + ":" + httpsPort + "/obix/histories/" + path + "/";
+                        url = httpMode + "://" + ipAddress + ":" + httpsPort + "/obix/histories/" + path + "/";
 
                         const presetQueryResponse = await axios.get(url, { auth: { username: username, password: password }, httpsAgent: new https.Agent({ rejectUnauthorized: false }), });
                         const presetQueryData = convert.xml2js(presetQueryResponse.data, { compact: true, spaces: 4 });

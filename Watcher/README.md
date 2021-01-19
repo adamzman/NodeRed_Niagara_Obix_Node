@@ -1,5 +1,5 @@
 ## Niagara Obix Watcher Node
-Watches several points and returns an array which includes all the points that changed since the last pull
+Watches several points and returns an array which includes all the points that changed since the last pull. **Can only read the 'out' value of a control point**
 
 - **Poll Rate** - The interval at which points are returned. Must be between 1 - 30 seconds.
 - **Search Paths** - Searches through the list of paths that are configured below.
