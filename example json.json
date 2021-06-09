@@ -1,9 +1,0 @@
-{
-	"topic": "Test",
-	"paths": [
-		{
-			"path": "Test",
-			"variableName": "TestName"
-		}
-	]
-}
