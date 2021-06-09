@@ -1,3 +1,5 @@
 /node_modules
-WatcherCopy/
-example.json
+
+# Hide all hidden folder and files
+.*/
+.*
