@@ -13,7 +13,8 @@
             "Niagara Obix Connector": "Connector/obix-niagara-connector.js",
             "Niagara Obix History": "History/obix-niagara-history.js",
             "Niagara Obix Variable": "Variable/obix-niagara-variable.js",
-            "Niagara Obix Watcher": "Watcher/obix-niagara-watcher.js"
+            "Niagara Obix Watcher": "Watcher/obix-niagara-watcher.js",
+            "Niagara Obix Watcher2": "Watcher2/obix-niagara-watcher2.js"
         }
     },
     "dependencies": {

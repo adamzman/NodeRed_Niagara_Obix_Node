@@ -4,24 +4,27 @@
         category: 'Niagara Obix',
         color: '#0088CE',
         defaults: {
-            name: {value: ""},
-            serverConfig: {value: "", type: "Niagara Obix Connector"},
-            pollRate: {value: 10, required: true, validate: function(v) {
-                return v <= 30 && v >= 5;
-            }},
-            search: {value: ""},
-            rules: {value:[], validate: function(v) {
-                return v.includes("") ? false : true;
-            }},
+            name: { value: "" },
+            serverConfig: { value: "", type: "Niagara Obix Connector" },
+            pollRate: {
+                value: 10, required: true, validate: function (v) {
+                    return v <= 30 && v >= 5;
+                }
+            },
+            search: { value: "" },
+            rules: {
+                value: [], validate: function (v) {
+                    return v.includes("") ? false : true;
+                }
+            },
         },
-        inputs:0,
-        outputs:1,
+        inputs: 0,
+        outputs: 1,
         icon: "font-awesome/fa-search",
-        label: function() {
+        label: function () {
             return this.name || "Niagara Obix Watcher";
         },
-        oneditprepare: function() {
-            const node = this;
+        oneditprepare: function () {
 
             // Setting Up Path List
             $('#node-input-rule-container').editableList({
@@ -30,7 +33,7 @@
                 scrollOnAdd: true,
                 sortable: true,
                 removable: true,
-                addItem: function(container, index, data) {
+                addItem: function (container, index, data) {
                     // Check for Empty Data
                     JSON.stringify(data) === JSON.stringify({}) ? data = "" : null;
 
@@ -39,56 +42,81 @@
                         class: 'node-input-rule-path-value',
                         type: 'text',
                         style: 'margin-left: 5px;',
-                        value: data,
+                        value: String(data),
                         placeholder: "Insert Niagara Path"
                     }).appendTo(row);
-                    node.rules.includes(data) ? null : node.rules.push(data);
-                }
-            });
-            
-            // Setting Up Search Bar
-            $('#node-input-search').searchBox({
-                change: function() {
-                    $("#node-input-rule-container").editableList('filter', function(rowData) {
-                        // Check for Empty Data
-                        if(JSON.stringify(rowData) === JSON.stringify({})){
-                            rowData = "";
-                        }
-                        return rowData.toLowerCase().includes($("#node-input-search").searchBox('value').toLowerCase());
-                    });
-                }
-            });
+                    $('<button/>', {
+                        class: 'node-input-rule-path-duplicate red-ui-button red-ui-button-small',
+                        type: 'button',
+                        style: 'margin-left: 10px;'
+                    }).html("<i class=\"fa fa-clone\"></i> Duplicate").on('click', function () {
+                        $("#node-input-rule-container").editableList('addItem', $(this).parent().find('.node-input-rule-path-value').val());
+                    }).appendTo(row);
 
-            // Handle Sort Button
-            $("#sortButton").on("click", function() {
-                $('#node-input-rule-container').trigger('custom');
+                    // Update number of items being show in the list
+                    $('#node-input-search').searchBox('count', `${index + 1} / ${index + 1}`);
+                },
+                removeItem: function (data) {
+                    // Update number of items being show in the list
+                    numOfPaths = $("#node-input-rule-container").editableList('length');
+                    $('#node-input-search').searchBox('count', `${numOfPaths} / ${numOfPaths}`);
+                }
             });
 
             // Re-Renders Path Container when sort button is clicked
-            $("#node-input-rule-container").on( "custom", function() {
-                var sortedRules = node.rules;
+            $("#sortButton").on("click", function () {
+                // Gets all Items from the EditableList
+                const listItems = $("#node-input-rule-container").editableList('items');
+                sortedRules = [];
+
+                listItems.each(function (index) { sortedRules.push($(this).find('.node-input-rule-path-value').val()); });
                 sortedRules.sort();
 
+                // Reset List
                 $("#node-input-rule-container").html("");
-                node.rules = [];
+                sortedRules.forEach(function (data) { $("#node-input-rule-container").editableList('addItem', data); });
+            });
 
-                sortedRules.forEach(function(index) {
-                    $("#node-input-rule-container").editableList('addItem', index);
-                });
+            // Setting Up Search Bar
+            $('#node-input-search').searchBox({
+                change: function () {
+                    numOfPaths = $("#node-input-rule-container").editableList('length');
+                    numOfFilteredPaths = 0;
+
+                    $("#node-input-rule-container").editableList('filter', function (rowData) {
+                        // Check for Empty Data
+                        JSON.stringify(rowData) === JSON.stringify({}) ? rowData = "" : null
+
+                        // Check each row and return true if it is in the search
+                        if (rowData.toLowerCase().includes($("#node-input-search").searchBox('value').toLowerCase())) {
+                            numOfFilteredPaths++;
+                            return true;
+                        } else
+                            return false;
+                    });
+
+                    // Shows the number of items being show in the list
+                    $('#node-input-search').searchBox('count', `${numOfFilteredPaths} / ${numOfPaths}`);
+                }
             });
 
             // Adds Path Values to the rules list
-            var rules = node.rules;
-            node.rules = [];
-            rules.forEach((rule) => $("#node-input-rule-container").editableList('addItem', rule));
+            this.rules.forEach((rule) => $("#node-input-rule-container").editableList('addItem', rule));
         },
-        oneditsave: function() {
-            const listItems = $("#node-input-rule-container").editableList('items');
+        oneditsave: function () {
             const node = this;
             node.rules = [];
+            var unfilteredList = [];
 
-            listItems.each(function(index) {                
-                $("#node-input-rule-container").editableList('addItem', $(this).find('.node-input-rule-path-value')[0].value);
+            const listItems = $("#node-input-rule-container").editableList('items');
+            listItems.each(function (i) {
+                var option = $(this);
+                var data = option.find(".node-input-rule-path-value").val();
+                unfilteredList.push(data);
+            });
+
+            node.rules = unfilteredList.filter(function (value, index, self) {
+                return self.indexOf(value) === index
             });
         },
     });
@@ -97,23 +125,33 @@
 <!-- Input to configure -->
 <script type="text/html" data-template-name="Niagara Obix Watcher">
     <div class="form-row">
+        <!-- Name -->
         <label for="node-input-name" style="width: 100%"><i class="fa fa-tag"></i> Name:</label><br/>
-        <input type="text" id="node-input-name" placeholder="Name">
+        <input type="text" id="node-input-name" placeholder="Name" style="width: 100%">
     </div>
     <div class="form-row">
+        <!-- Server Config -->
         <label for="node-input-serverConfig" style="width: 100%"><i class="fa fa-globe"></i> Connector:</label><br/>
-        <input type="text" id="node-input-serverConfig">
+        <input type="text" id="node-input-serverConfig" style="width: 100%">
     </div><hr/>
     <div class="form-row">
+        <!-- Poll Rate -->
         <label for="node-input-pollRate" style="width: 100%"><i class="fa fa-refresh"></i> Poll Rate (seconds):</label><br/>
-        <input type="number" id="node-input-pollRate">
+        <input title="Poll Rate must be between 5 and 30 seconds" type="number" id="node-input-pollRate" style="width: 100%">
+
+        <!-- Relativize -->
+        <label for="node-input-relativize" style="width: 80%"><i class="fa fa-dot-circle-o"></i> Relativized Path:</label>
+        <button type="button" class="red-ui-button red-ui-button-small" id="relativizeButton" style="float: right"><i class="fa fa-dot-circle-o"></i> Relativize</button>
+        <input type="text" id="node-input-relativize" style="width: 100%">
     </div>
     <div class="form-row">
+        <!-- Search -->
         <label for="node-input-search" style="width: 100%"><i class="fa fa-search"></i> Search Paths:</label><br/>
         <input type="text" id="node-input-search" style="border: 1px solid #ccc; border-radius: 4px">
     </div>
     <div class="form-row node-input-rule-container-row">
-        <label for="node-input-rule-container"><i class="fa fa-tasks"></i> Paths:</span></label>
+        <!-- Paths -->
+        <label for="node-input-rule-container"><i class="fa fa-tasks"></i> Paths:</label>
         <button type="button" class="red-ui-button red-ui-button-small" id="sortButton" style="float: right"><i class="fa fa-sort-alpha-asc"></i> Sort</button>
         <ol id="node-input-rule-container"></ol>
     </div>
