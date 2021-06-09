@@ -6,11 +6,13 @@
         defaults: {
             name: { value: "" },
             serverConfig: { value: "", type: "Niagara Obix Connector" },
+            topic: { value: "" },
             pollRate: {
                 value: 10, required: true, validate: function (v) {
                     return v <= 30 && v >= 5;
                 }
             },
+            relativize: { value: "" },
             search: { value: "" },
             rules: { value: [] },
         },
@@ -21,6 +23,7 @@
             return this.name || "Niagara Obix Watcher";
         },
         oneditprepare: function () {
+            const node = this;
 
             // Setting Up Path List
             $('#node-input-rule-container').editableList({
@@ -37,7 +40,7 @@
                         type: 'text',
                         style: 'margin-left: 5px;',
                         value: data.varName || "",
-                        placeholder: "Insert Variable Display Name (Optional)",
+                        placeholder: "Insert Variable Name (Optional)",
                         title: "Variable Name"
                     }).appendTo(row);
 
@@ -153,7 +156,7 @@
 
             // Remove Empty Paths
             node.rules = unfilteredList.filter(function (value, index, self) {
-                return value.pathName != ""
+                return value.pathName != "";
             });
         },
     });
@@ -185,11 +188,12 @@
     <div class="form-row">
         <!-- Relativize -->
         <label for="node-input-relativize"><i class="fa fa-dot-circle-o"></i> Relativize:</label>
-        <input title="Path to be prepended to each path below" type="text" id="node-input-relativize">
+        <input title="Path to be prepended to selected paths below" type="text" id="node-input-relativize" placeholder="Relativized Path">
+        <!-- TODO: Add ability to add input to node like how function node can change output -->
         <!-- TODO: Add an import button that allows to import a csv of paths -->
         <!-- TODO: Add Auto Relativize Functionality -->
         <!-- <div style="display: inline-block; width: 70%">
-            <input title="Path to be prepended to each path below" type="text" id="node-input-relativize" style="width: calc(100% - 44px);">
+            <input title="Path to be prepended to selected paths below" type="text" id="node-input-relativize" placeholder="Relativized Path" style="width: calc(100% - 44px);">
             <div style="margin-left:5px; display: inline-block; position: relative;">
                 <button title="Auto-Relativize" type="button" class="red-ui-button" id="relativizeButton"><i class="fa fa-dot-circle-o"></i></button>
             </div>
