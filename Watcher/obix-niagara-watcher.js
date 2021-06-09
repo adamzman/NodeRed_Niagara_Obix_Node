@@ -24,7 +24,7 @@ module.exports = function (RED) {
         node.newWatchTimeout1 ? clearTimeout(node.newWatchTimeout1) : null;
         node.pollChangesInterval ? clearInterval(node.pollChangesInterval) : null;
 
-        if(typeof status != "string") status = "Error - Ensure HTTPS/HTTP is available, and configured Port is used with proper Connection Mode";
+        if (typeof status != "string") status = "Error - Ensure HTTPS/HTTP is available, and configured Port is used with proper Connection Mode";
         node.status({ fill: "red", shape: "dot", text: status });
         node.error(err, msg);
 
@@ -44,7 +44,9 @@ module.exports = function (RED) {
             var httpMode = node.serverConfig.mode;
             var httpsPort = node.serverConfig.port;
             var pollRate = config.pollRate;
-            var paths = config.rules;
+            var paths = [];
+
+            config.rules.forEach(data => { paths.push(data.pathName); })
 
             // If missing a configuration variable, return error
             if (!username) { throw "Missing Username"; }
@@ -53,7 +55,7 @@ module.exports = function (RED) {
             if (!httpMode) { throw "Select HTTP or HTTPS"; }
             if (!httpsPort) { throw "Missing HTTPS Port"; }
             if (!pollRate || !(pollRate <= 30 && pollRate >= 1)) { throw "Invalid/Missing PollRate"; }
-            if (!paths) { throw "Missing a Path" }
+            // if (!paths) { throw "Missing a Path" }
 
             // Slice '/' from the path if it exists
             for (i = 0; i < paths.length; i++) {
