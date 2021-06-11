@@ -7,6 +7,7 @@
             name: { value: "" },
             serverConfig: { value: "", type: "Niagara Obix Connector" },
             topic: { value: "" },
+            pullChangesOnly: { value: true },
             pollRate: {
                 value: 10, required: true, validate: function (v) {
                     return v >= 5;
@@ -69,16 +70,37 @@
                 removable: true,
                 addItem: function (container, index, data) {
                     // Var Name Input
-                    const row = $('<div/>').appendTo(container);
+                    const row = $('<div/>', {style: 'display: flex'}).appendTo(container);
+
+                    // Path Input
                     $('<input/>', {
-                        class: 'node-input-rule-var-name',
+                        class: 'node-input-rule-path-name',
                         type: 'text',
-                        style: 'margin-left: 5px;',
-                        value: data.varName || "",
-                        placeholder: "Insert Variable Name (Optional)",
-                        title: "Variable Name"
+                        style: 'margin-left: 5px; flex: 2; align-self: center',
+                        value: data.pathName || "",
+                        placeholder: "Insert Niagara Path",
+                        title: "Variable Path"
                     }).appendTo(row);
 
+                    const row2 = $('<div/>', {style: 'flex: 1; min-width: 160px'}).appendTo(row)
+                    
+                    // Relativize CheckBox
+                    $('<input/>', {
+                        class: 'node-input-rule-rel-flag',
+                        type: 'checkbox',
+                        style: 'margin-left: 7px; width: 20px;',
+                        value: "isRelativized",
+                        title: "Prepend Relativized Path?"
+                    }).prop('checked', data.relFlag || false).appendTo(row2);
+                    
+                    // Relativize Label
+                    $('<label/>', {
+                        for: 'node-input-rule-rel-flag',
+                        style: 'margin-bottom: 0; font-size: 10px; padding-top: 5px; vertical-align: middle; line-height: 34px; user-select: none; width: 50px'
+                    }).html("Relativized").on('click', function () {
+                        $(this).parent().find('.node-input-rule-rel-flag').prop('checked', !$(this).parent().find('.node-input-rule-rel-flag').prop('checked'));
+                    }).appendTo(row2);
+                    
                     // Duplicate Button
                     $('<button/>', {
                         class: 'node-input-rule-path-duplicate red-ui-button red-ui-button-small',
@@ -87,38 +109,10 @@
                     }).html("<i class=\"fa fa-clone\"></i> Duplicate").on('click', function () {
                         $("#node-input-rule-container").editableList('addItem', {
                             relFlag: $(this).parent().find('.node-input-rule-rel-flag').prop('checked'),
-                            pathName: $(this).parent().find('.node-input-rule-path-name').val(),
-                            varName: $(this).parent().find('.node-input-rule-var-name').val()
+                            pathName: $(this).parent().find('.node-input-rule-path-name').val()
                         });
-                    }).appendTo(row);
-
-                    // Path Input
-                    $('<input/>', {
-                        class: 'node-input-rule-path-name',
-                        type: 'text',
-                        style: 'margin-left: 5px; margin-top: 5px;',
-                        value: data.pathName || "",
-                        placeholder: "Insert Niagara Path",
-                        title: "Variable Path"
-                    }).appendTo(row);
-
-                    // Relativize CheckBox
-                    $('<input/>', {
-                        class: 'node-input-rule-rel-flag',
-                        type: 'checkbox',
-                        style: 'margin-left: 7px; width: 20px;',
-                        value: "isRelativized",
-                        title: "Prepend Relativized Path?"
-                    }).prop('checked', data.relFlag || false).appendTo(row);
-
-                    // Relativize Label
-                    $('<label/>', {
-                        for: 'node-input-rule-rel-flag',
-                        style: 'margin-bottom: 0; font-size: 10px; padding-top: 5px; vertical-align: middle; line-height: 34px; user-select: none;'
-                    }).html("Relativized").on('click', function () {
-                        $(this).parent().find('.node-input-rule-rel-flag').prop('checked', !$(this).parent().find('.node-input-rule-rel-flag').prop('checked'));
-                    }).appendTo(row);
-
+                    }).appendTo(row2);
+                    
                     // Update number of items being show in the list
                     $('#node-input-search').searchBox('count', `${index + 1} / ${index + 1}`);
                 },
@@ -138,11 +132,10 @@
                 listItems.each(function (index) {
                     sortedRules.push({
                         relFlag: $(this).find('.node-input-rule-rel-flag').prop('checked'),
-                        pathName: $(this).find('.node-input-rule-path-name').val(),
-                        varName: $(this).find('.node-input-rule-var-name').val()
+                        pathName: $(this).find('.node-input-rule-path-name').val()
                     });
                 });
-                sortedRules.sort((a, b) => (a.varName > b.varName) ? 1 : (a.varName === b.varName) ? ((a.pathName > b.pathName) ? 1 : -1) : -1);
+                sortedRules.sort((a, b) => (a.pathName > b.pathName) ? 1 : -1);
 
                 // Reset List
                 $("#node-input-rule-container").html("");
@@ -158,7 +151,7 @@
 
                     $("#node-input-rule-container").editableList('filter', function (data) {
                         // Check each row and return true if it is in the search
-                        if (data.pathName.toLowerCase().includes(searchValue) || data.varName.toLowerCase().includes(searchValue) || data.pathName.length == 0) {
+                        if (data.pathName.toLowerCase().includes(searchValue) || data.pathName.length == 0) {
                             numOfFilteredPaths++;
                             return true;
                         } else
@@ -183,8 +176,7 @@
                 var option = $(this);
                 var data = {
                     relFlag: option.find('.node-input-rule-rel-flag').prop('checked'),
-                    pathName: option.find(".node-input-rule-path-name").val(),
-                    varName: option.find(".node-input-rule-var-name").val()
+                    pathName: option.find(".node-input-rule-path-name").val()
                 };
                 unfilteredList.push(data);
             });
@@ -219,12 +211,16 @@
         <label for="node-input-pollRate"><i class="fa fa-refresh"></i> Poll Rate:</label>
         <input title="Poll Rate must be 5 or more seconds" type="number" id="node-input-pollRate" style="width: 70px">
         <span> seconds</span>
+        <!-- Pull Changes Checkbox -->
+        <span style="margin-left: 20px; cursor: pointer">
+            <input title="Only pull change that has changed" type="checkbox" id="node-input-pullChangesOnly" style="width: 20px"/>
+            <label for="node-input-pullChangesOnly" style="margin-bottom: 0; font-size: 12px; padding-top: 5px; vertical-align: middle; line-height: 34px; user-select: none; width: auto">Pull Changes Only?</label>
+        </span>
     </div>
     <div class="form-row">
         <!-- Relativize -->
         <label for="node-input-relativize"><i class="fa fa-dot-circle-o"></i> Relativize:</label>
         <input title="Path to be prepended to selected paths below" type="text" id="node-input-relativize" placeholder="Relativized Path">
-        <!-- TODO: Add ability to add input to node like how function node can change output -->
         <!-- TODO: Add an import button that allows to import a csv of paths -->
         <!-- TODO: Add Auto Relativize Functionality -->
         <!-- <div style="display: inline-block; width: 70%">

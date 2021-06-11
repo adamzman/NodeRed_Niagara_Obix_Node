@@ -293,15 +293,15 @@ module.exports = function (RED) {
 
     RED.nodes.registerType("Niagara Obix Watcher", WatcherNode);
 
-    RED.httpAdmin.post("/obixwatcher/:id", RED.auth.needsPermission("obixwatcher.write"), function(req,res) {
+    RED.httpAdmin.post("/obixwatcher/:id", RED.auth.needsPermission("obixwatcher.write"), function (req, res) {
         var node = RED.nodes.getNode(req.params.id);
         if (node != null) {
             try {
                 node.receive();
                 res.sendStatus(200);
-            } catch(err) {
+            } catch (err) {
                 res.sendStatus(500);
-                node.error(RED._("inject.failed",{error:err.toString()}));
+                node.error(RED._("inject.failed", { error: err.toString() }));
             }
         } else {
             res.sendStatus(404);
