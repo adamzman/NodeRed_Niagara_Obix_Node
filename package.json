@@ -19,7 +19,6 @@
     },
     "dependencies": {
         "axios": "^0.21.0",
-        "https": "^1.0.0",
         "moment-timezone": "^0.5.31",
         "tcp-ping": "^0.1.1",
         "xml-js": "^1.6.11"

@@ -3,293 +3,140 @@ module.exports = function (RED) {
     const axios = require("axios");
     const convert = require('xml-js');
     const https = require('https');
-    const tcpp = require('tcp-ping');
 
-    function parseValue(value) {
-        try {
-            var variable = (value._attributes.href).split("/obix/config/");
-            variable = variable[1].slice(0, -1);
+    // function parseValue(value) {
+    //     try {
+    //         var variable = (value._attributes.href).split("/obix/config/");
+    //         variable = variable[1].slice(0, -1);
 
-            msg = {
-                "Variable": variable,
-                "Value": value._attributes.val
-            }
-            return msg;
-        } catch (error) {
-            return { "error": error };
-        }
-    }
+    //         msg = {
+    //             "Variable": variable,
+    //             "Value": value._attributes.val
+    //         }
+    //         return msg;
+    //     } catch (error) {
+    //         return { "error": error };
+    //     }
+    // }
 
-    function throwError(node, config, msg, err, status) {
-        node.newWatchTimeout1 ? clearTimeout(node.newWatchTimeout1) : null;
-        node.pollChangesInterval ? clearInterval(node.pollChangesInterval) : null;
+    function WatcherNode(n) {
 
-        if (typeof status != "string") status = "Error - Ensure HTTPS/HTTP is available, and configured Port is used with proper Connection Mode";
-        node.status({ fill: "red", shape: "dot", text: status });
-        node.error(err, msg);
+        RED.nodes.createNode(this, n);
 
-        node.newWatchTimeout1 = setTimeout(function () { onCreate(node, config); }, 10000);
-    }
+        this.serverConfig = RED.nodes.getNode(n.serverConfig);
 
-    function onCreate(node, config) {
+        this.topic = n.topic;
+        this.pollRate = (n.pollRate || 0) < 5 ? 10 : n.pollRate;
+        this.relativize = n.relativize;
+        this.rules = n.rules;
+        this.loading = false;
 
-        msg = {};
+        const instance = axios.create({
+            baseURL: this.serverConfig.mode + '://' + this.serverConfig.host + ':' + this.serverConfig.port + '/obix/',
+            timeout: 2000,
+            auth: {
+                username: this.serverConfig.username,
+                password: this.serverConfig.password
+            },
+            httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+            transformResponse: [function (data) {
+                try {
+                    return convert.xml2js(data, { compact: true, spaces: 4 })
+                } catch (error) {
+                    return data
+                }
+            }],
+        })
 
-        // Set Variables
-        try {
-            // Setting all variables if passed in, if not, we will use the preset values
-            var username = node.serverConfig.username;
-            var password = node.serverConfig.password;
-            var ipAddress = node.serverConfig.host;
-            var httpMode = node.serverConfig.mode;
-            var httpsPort = node.serverConfig.port;
-            var pollRate = config.pollRate;
-            var paths = [];
-
-            config.rules.forEach(data => { paths.push(data.pathName); })
-
-            // If missing a configuration variable, return error
-            if (!username) { throw "Missing Username"; }
-            if (!password) { throw "Missing Password"; }
-            if (!ipAddress) { throw "Missing IP Address"; }
-            if (!httpMode) { throw "Select HTTP or HTTPS"; }
-            if (!httpsPort) { throw "Missing HTTPS Port"; }
-            if (!pollRate || !(pollRate <= 30 && pollRate >= 1)) { throw "Invalid/Missing PollRate"; }
-            // if (!paths) { throw "Missing a Path" }
-
-            // Slice '/' from the path if it exists
-            for (i = 0; i < paths.length; i++) {
-                path = paths[i];
-                path.charAt(path.length - 1) == '/' ? path = path.slice(0, -1) : null;
-                path.charAt(0) == '/' ? path = path.slice(1) : null;
-                paths[i] = path;
-            }
-        } catch (error) {
-            throwError(node, config, msg, error, error);
-            return;
-        }
-
-        // Initial Connection Pings
-        tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 4000, "attempts": 1 }, async function (err, data) {
-
-            if (err) {
-                throwError(node, config, msg, "Error in TCP Ping: " + err, "Error in TCP Ping");
-                return;
-            }
-            if (data.results[0].err) {
-                throwError(node, config, msg, "Host/Port Unavailable - Failed to Ping for Initial Watch Creation", "Host/Port Unavailable");
-                return;
-            }
-
-            var createWatchData;
-
-            // Make a new Watch
+        this.on("input", async function (msg, send, done) {
             try {
-                var apiCallConfig = {
-                    method: 'post',
-                    url: httpMode + '://' + ipAddress + ':' + httpsPort + '/obix/watchService/make',
-                    auth: {
-                        username: username,
-                        password: password
-                    },
-                    httpsAgent: new https.Agent({ rejectUnauthorized: false })
-                };
-                node.status({ fill: "blue", shape: "dot", text: "Creating Watch" });
-                // Make a new Watch
-                const createWatchResponse = await axios(apiCallConfig);
-                // Convert Response to JSON
-                createWatchData = convert.xml2js(createWatchResponse.data, { compact: true, spaces: 4 });
-                // Get Watch Number
-                var watchNumUrl = (createWatchData.obj._attributes.href).split("/");
-                var watchNum = watchNumUrl[watchNumUrl.length - 2];
-                node.status({ fill: "green", shape: "dot", text: "Watch Created: " + watchNum });
+                // Prevent spamming of inject
+                if (this.loading) { return; }
+                this.loading = true;
+
+                // Delete Previous Watch if there was one
+                if (this.prevWatchDelete) { await instance.post(this.prevWatchDelete); }
+
+                // Make Watch
+                var watchRes = await instance.post('/watchService/make');
+                this.watchNumber = watchRes.data.obj._attributes.href.split(/[\s/]+/).slice(-2)[0];
+                this.prevWatchDelete = watchRes.data.obj.op[4]._attributes.href;
+
+                console.log(this.watchNumber);
+
+                // Change Lease Time
+                var leaseRes = await instance.put(watchRes.data.obj.reltime._attributes.href, `<real val="${((this.pollRate + 5) * 1000)}" />`);
+
+
+                // TODO: Countdown when the pull will happen
+                // TODO: Make status yellow when using http
+                // TODO: Make status blue when pulling
+                this.loading = false;
+                this.status({ fill: "green", shape: "dot", text: "Watch Created: " + this.watchNumber });
+                send({ watchRes: watchRes, leaseRes: leaseRes })
             } catch (error) {
-                throwError(node, config, msg, error, error);
-                return;
+
+                // Formatting Errors
+                // If cannot connect to server
+                if (error.code == "ECONNABORTED") {
+                    var friendlyError = "Connection Error - Timeout"
+                    var inDepthError = 'Error ECONNABORTED- Connection to server could not be established:\n' + 
+                    '\n1. Check the configured IP Address and Port' + 
+                    '\n2. Ensure http/https is enabled in the WebServices in Niagara';
+                }
+                // If invalid credentials
+                else if (error.message == "Request failed with status code 401") {
+                    var friendlyError = "Invalid Username/Password - 401";
+                    var inDepthError = 'Error 401 - Invalid Credentials:\n' + 
+                    '\n1. Ensure the Username / Password is correct' +
+                    '\n2. Ensure the Obix user account has HTTPBasicScheme authentication (Check Documentation in Github for more details)';
+                }
+                // If permission error
+                else if (error.message == "Request failed with status code 403") {
+                    var friendlyError = "Permission Error - 403";
+                    var inDepthError = 'Error 403 - Permission Error:\n' + 
+                    '\n1. Ensure the obix user has the admin role assigned / admin privileges';
+                }
+                // If obix driver missing
+                else if (error.message == "Request failed with status code 404") {
+                    var friendlyError = "Obix Driver Missing - 404";
+                    var inDepthError = 'Error 404 - Obix Driver most likely missing:\n' +
+                    '\n1. Ensure the obix driver is placed directly under the Drivers in the Niagara tree (Check Documentation in Github for more details)';
+                }
+                else {
+                    var friendlyError = "Unknown Error";
+                    var inDepthError = error;
+                    send({ error: error })
+                }
+
+                // Set Node Error Information
+                this.loading = false;
+                this.status({ fill: "red", shape: "dot", text: friendlyError });
+                this.error(inDepthError, msg);
             }
-
-            // Make ADD POST Request
-            try {
-                // Prepare Paths for ADD POST Request
-                var apiPathsAdd = [];
-                paths.forEach((path) => apiPathsAdd.push('<uri val="/obix/config/' + path + '/"/>'));
-                var apiAddConfig = {
-                    method: 'post',
-                    url: createWatchData.obj.op[0]._attributes.href,
-                    auth: {
-                        username: username,
-                        password: password
-                    },
-                    httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-                    data: `<obj
-                            is="obix:WatchIn"
-                            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                            xmlns="http://obix.org/ns/schema/1.0">
-                            <list
-                                name="hrefs"
-                                of="obix:Uri">
-                                ` + apiPathsAdd + `
-                            </list>
-                        </obj>`
-                };
-
-                const addPathsResponse = await axios(apiAddConfig);
-                const addPathsData = convert.xml2js(addPathsResponse.data, { compact: true, spaces: 4 });
-
-                // Checking for Errors after Add was Successful
-                if (addPathsData.obj.list.err) {
-                    var x = 0;
-                    for (i = 0; i < addPathsData.obj.list.err.length; i++) {
-                        x = 1;
-                        if (addPathsData.obj.list.err[i]._attributes.is == "obix:BadUriErr")
-                            throw "Invalid Path: " + addPathsData.obj.list.err[i]._attributes.display;
-                    }
-                    if (x == 0)
-                        if (addPathsData.obj.list.err._attributes.is == "obix:BadUriErr")
-                            throw "Invalid Path: " + addPathsData.obj.list.err._attributes.display;
-                    return;
-                }
-            } catch (error) {
-                throwError(node, config, msg, error, error);
-                return;
-            }
-
-            // Initial Poll Refresh
-            try {
-                var apiPollRefreshConfig = {
-                    method: 'post',
-                    url: createWatchData.obj.op[3]._attributes.href,
-                    auth: {
-                        username: username,
-                        password: password
-                    },
-                    httpsAgent: new https.Agent({ rejectUnauthorized: false })
-                };
-
-                const pollRefreshResponse = await axios(apiPollRefreshConfig)
-                const pollRefreshData = convert.xml2js(pollRefreshResponse.data, { compact: true, spaces: 4 });
-
-                var values = [];
-                if (pollRefreshData.obj.list.real) {
-                    if (Array.isArray(pollRefreshData.obj.list.real)) {
-                        (pollRefreshData.obj.list.real).forEach((stuff) => values.push(parseValue(stuff)));
-                    } else {
-                        values.push(parseValue(pollRefreshData.obj.list.real));
-                    }
-                }
-                if (pollRefreshData.obj.list.str) {
-                    if (Array.isArray(pollRefreshData.obj.list.str)) {
-                        (pollRefreshData.obj.list.str).forEach((stuff) => values.push(parseValue(stuff)));
-                    } else {
-                        values.push(parseValue(pollRefreshData.obj.list.str));
-                    }
-                }
-                if (pollRefreshData.obj.list.enum) {
-                    if (Array.isArray(pollRefreshData.obj.list.enum)) {
-                        (pollRefreshData.obj.list.enum).forEach((stuff) => values.push(parseValue(stuff)));
-                    } else {
-                        values.push(parseValue(pollRefreshData.obj.list.enum));
-                    }
-                }
-                if (pollRefreshData.obj.list.bool) {
-                    if (Array.isArray(pollRefreshData.obj.list.bool)) {
-                        (pollRefreshData.obj.list.bool).forEach((stuff) => values.push(parseValue(stuff)));
-                    } else {
-                        values.push(parseValue(pollRefreshData.obj.list.bool));
-                    }
-                }
-
-                // Send Poll Refresh Values
-                msg = {
-                    reset: true,
-                    payload: values
-                }
-                node.send(msg);
-            } catch (error) {
-                throwError(node, config, msg, error, error);
-                return;
-            }
-
-            node.pollChangesInterval = setInterval(async function () {
-                tcpp.ping({ "address": ipAddress, "port": Number(httpsPort), "timeout": 4000, "attempts": 1 }, async function (err, data) {
-                    try {
-                        if (err) { throw "Error in TCP Ping"; }
-                        if (data.results[0].err) { throw "Host/Port Unavailable - Poll Change"; }
-
-                        var apiPollChangesConfig = {
-                            method: 'post',
-                            url: createWatchData.obj.op[2]._attributes.href,
-                            auth: {
-                                username: username,
-                                password: password
-                            },
-                            httpsAgent: new https.Agent({ rejectUnauthorized: false })
-                        };
-
-                        // Make PollChanges POST Request
-                        const pollChangesResponse = await axios(apiPollChangesConfig);
-                        const pollChangesData = convert.xml2js(pollChangesResponse.data, { compact: true, spaces: 4 });
-
-                        var values = [];
-                        if (pollChangesData.obj.list.real) {
-                            if (Array.isArray(pollChangesData.obj.list.real)) {
-                                (pollChangesData.obj.list.real).forEach((stuff) => values.push(parseValue(stuff)));
-                            } else {
-                                values.push(parseValue(pollChangesData.obj.list.real));
-                            }
-                        }
-                        if (pollChangesData.obj.list.str) {
-                            if (Array.isArray(pollChangesData.obj.list.str)) {
-                                (pollChangesData.obj.list.str).forEach((stuff) => values.push(parseValue(stuff)));
-                            } else {
-                                values.push(parseValue(pollChangesData.obj.list.str));
-                            }
-                        }
-                        if (pollChangesData.obj.list.enum) {
-                            if (Array.isArray(pollChangesData.obj.list.enum)) {
-                                (pollChangesData.obj.list.enum).forEach((stuff) => values.push(parseValue(stuff)));
-                            } else {
-                                values.push(parseValue(pollChangesData.obj.list.enum));
-                            }
-                        }
-                        if (pollChangesData.obj.list.bool) {
-                            if (Array.isArray(pollChangesData.obj.list.bool)) {
-                                (pollChangesData.obj.list.bool).forEach((stuff) => values.push(parseValue(stuff)));
-                            } else {
-                                values.push(parseValue(pollChangesData.obj.list.bool));
-                            }
-                        }
-
-                        msg = {
-                            payload: values
-                        };
-                        node.send(msg);
-                    } catch (error) {
-                        throwError(node, config, msg, error, error);
-                        return;
-                    }
-                });
-            }, pollRate * 1000);
         });
-    }
-
-    function WatcherNode(config) {
-
-        RED.nodes.createNode(this, config);
-
-        var node = this;
-        node.serverConfig = RED.nodes.getNode(config.serverConfig);
-
-        onCreate(node, config)
 
         this.on('close', function (removed, done) {
-            node.status({ fill: "red", shape: "ring", text: "Disconnected" });
-            node.pollChangesInterval ? clearInterval(node.pollChangesInterval) : null;
-            node.newWatchTimeout1 ? clearTimeout(node.newWatchTimeout1) : null;
+            this.status({ fill: "red", shape: "ring", text: "Disconnected" });
             done();
         });
 
     }
 
     RED.nodes.registerType("Niagara Obix Watcher", WatcherNode);
+
+    RED.httpAdmin.post("/obixwatcher/:id", RED.auth.needsPermission("obixwatcher.write"), function (req, res) {
+        var node = RED.nodes.getNode(req.params.id);
+        if (node != null) {
+            try {
+                node.receive();
+                res.sendStatus(200);
+            } catch (err) {
+                res.sendStatus(500);
+                node.error(RED._("inject.failed", { error: err.toString() }));
+            }
+        } else {
+            res.sendStatus(404);
+        }
+    });
 }
