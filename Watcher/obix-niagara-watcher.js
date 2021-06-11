@@ -87,6 +87,8 @@ module.exports = function (RED) {
             }],
         })
 
+        this.emit("input", {});
+
         this.on("input", async function (msg, send, done) {
             try {
                 var node = this;
