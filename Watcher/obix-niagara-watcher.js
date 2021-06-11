@@ -61,11 +61,11 @@ module.exports = function (RED) {
 
         this.topic = n.topic;
         this.pollRate = (n.pollRate || 0) < 5 ? 10 : n.pollRate;
-        this.pullChangesOnly = n.pullChangesOnly || true;
+        this.pullChangesOnly = n.pullChangesOnly;
         this.relativize = n.relativize;
         this.rules = n.rules;
         this.loading = false;
-
+        
         // Clean up relativize path
         this.relativize.charAt(this.relativize.length - 1) == '/' ? this.relativize = this.relativize.slice(0, -1) : null;
         this.relativize.charAt(0) == '/' ? this.relativize = this.relativize.slice(1) : null;
