@@ -7,7 +7,7 @@
             name: { value: "" },
             serverConfig: { value: "", type: "Niagara Obix Connector" },
             topic: { value: "" },
-            pullChangesOnly: { value: true },
+            // pullChangesOnly: { value: true },
             pollRate: {
                 value: 10, required: true, validate: function (v) {
                     return v >= 5;
@@ -109,7 +109,7 @@
                     }).html("<i class=\"fa fa-clone\"></i> Duplicate").on('click', function () {
                         $("#node-input-rule-container").editableList('addItem', {
                             relFlag: $(this).parent().find('.node-input-rule-rel-flag').prop('checked'),
-                            pathName: $(this).parent().find('.node-input-rule-path-name').val()
+                            pathName: $(this).parent().parent().find('.node-input-rule-path-name').val()
                         });
                     }).appendTo(row2);
                     
@@ -212,10 +212,10 @@
         <input title="Poll Rate must be 5 or more seconds" type="number" id="node-input-pollRate" style="width: 70px">
         <span> seconds</span>
         <!-- Pull Changes Checkbox -->
-        <span style="margin-left: 20px; cursor: pointer; user-select: none">
+        <!-- <span style="margin-left: 20px; cursor: pointer; user-select: none">
             <input title="Only pull change that has changed" type="checkbox" id="node-input-pullChangesOnly" style="width: 20px"/>
             <label for="node-input-pullChangesOnly" style="margin-bottom: 0; font-size: 12px; padding-top: 5px; vertical-align: middle; line-height: 34px; user-select: none; width: auto">Pull Changes Only?</label>
-        </span>
+        </span> -->
     </div>
     <div class="form-row">
         <!-- Relativize -->
