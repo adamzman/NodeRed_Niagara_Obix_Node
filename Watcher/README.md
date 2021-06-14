@@ -10,5 +10,4 @@ The inject button is similar to redeploying node red. It just restarts the poll.
 -   **Paths** - The list of paths that are returned on each pull. Add a new Path by clicking the "Add New Path" and Delete a path by clicking the "x" next to the path. You can also sort the list by clicking the sort button or dragging the three bars next to the path. The duplicate button does duplicates the values of that row to a new row.
 
 ![Example of Niagara Tree](niagara.jpg?raw=true "Example of Niagara Tree")
-![Example of Niagara Path](niagaraPath.jpg?raw=true "Example of Niagara Path")
 ![Example of Node Red configuration](nodered.jpg?raw=true "Example of Node Red configuration")
