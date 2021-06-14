@@ -226,7 +226,7 @@ module.exports = function (RED) {
 
                 // Call - Adds paths to watch
                 var results = await addToWatch(node, msg);
-                findBadURI(results.data.obj.list.err, node, msg);                
+                findBadURI(results.data.obj.list.err, node, msg);
                 var results = parseData(results.data);
                 node.send({ topic: node.topic, payload: results });
 
@@ -238,11 +238,11 @@ module.exports = function (RED) {
                         var results = await addToWatch(node, msg);
                         // Check for bad paths
                         findBadURI(results.data.obj.list.err, node, msg);
-                        
+
                         // TODO: Change so, on input, actually does a poll refresh/change instead
                         // Call - Poll Refresh - Get initial values
                         // var pollResults = await node.instance.post(node.pullChangesOnly ? node.watchRes.data.obj.op[2]._attributes.href : node.watchRes.data.obj.op[3]._attributes.href);
-                        
+
                         var results = parseData(results.data);
                         node.send({ topic: node.topic, payload: results });
                     } catch (error) {
