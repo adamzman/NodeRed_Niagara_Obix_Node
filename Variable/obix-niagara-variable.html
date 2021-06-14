@@ -4,10 +4,11 @@
         category: 'Niagara Obix',
         color: '#0088CE',
         defaults: {
-            name: {value: ""},
-            serverConfig: {value: "", type: "Niagara Obix Connector"},
-            path: {value: ""},
-            action: {value: "GET"},
+            name: { value: "" },
+            serverConfig: { value: "", type: "Niagara Obix Connector" },
+            topic: { value: "" },
+            path: { value: "" },
+            action: { value: "read" },
             value: {
                 value: true,
                 validate: RED.validators.typedInput('valueType')
@@ -16,18 +17,53 @@
                 value: 'bool'
             },
         },
-        inputs:1,
-        outputs:1,
+        inputs: 1,
+        outputs: 1,
         icon: "font-awesome/fa-bullseye",
-        label: function() {
+        button: {
+            enabled: function () {
+                return !this.changed
+            },
+            onclick: function () {
+                if (this.changed) {
+                    return RED.notify(RED._("notification.warning", { message: RED._("notification.warnings.undeployedChanges") }), "warning");
+                }
+
+                var label = this._def.label.call(this);
+                if (label.length > 30) {
+                    label = label.substring(0, 50) + "...";
+                }
+                label = label.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                var node = this;
+                $.ajax({
+                    url: "obixvariable/" + this.id,
+                    type: "POST",
+                    success: function (resp) {
+                        RED.notify(node._("Injecting", { label: label }), { type: "success", id: "inject", timeout: 2000 });
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        if (jqXHR.status == 404) {
+                            RED.notify(node._("common.notification.error", { message: node._("common.notification.errors.not-deployed") }), "error");
+                        } else if (jqXHR.status == 500) {
+                            RED.notify(node._("common.notification.error", { message: node._("inject.errors.failed") }), "error");
+                        } else if (jqXHR.status == 0) {
+                            RED.notify(node._("common.notification.error", { message: node._("common.notification.errors.no-response") }), "error");
+                        } else {
+                            RED.notify(node._("common.notification.error", { message: node._("common.notification.errors.unexpected", { status: jqXHR.status, message: textStatus }) }), "error");
+                        }
+                    }
+                });
+            }
+        },
+        label: function () {
             return this.name || "Niagara Obix Variable";
         },
         // Used for the input type selector
-        oneditprepare: function() {
+        oneditprepare: function () {
             $('#node-input-value').typedInput({
                 default: 'bool',
                 typeField: $("#node-input-valueType"),
-                types: ['bool','str','num']
+                types: ['bool', 'str', 'num']
             });
         }
     });
@@ -36,25 +72,35 @@
 <!-- Input to configure -->
 <script type="text/html" data-template-name="Niagara Obix Variable">
     <div class="form-row">
-        <label for="node-input-name" style="width: 100%"><i class="fa fa-tag"></i> Name:</label><br/>
+        <!-- Name -->
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name:</label>
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
     <div class="form-row">
-        <label for="node-input-serverConfig" style="width: 100%"><i class="fa fa-globe"></i> Niagara Connector:</label><br/>
+        <!-- Server Config -->
+        <label for="node-input-serverConfig"><i class="fa fa-globe"></i> Connector:</label>
         <input type="text" id="node-input-serverConfig">
     </div><hr/>
     <div class="form-row">
-        <label for="node-input-path" style="width: 100%"><i class="fa fa-road"></i> Variable Path (Default):</label><br/>
+        <!-- Topic -->
+        <label for="node-input-topic" style="width: 100%"><i class="fa fa-tasks"></i> Topic:</label>
+        <input type="text" id="node-input-topic">
+    </div>
+    <div class="form-row">
+        <!-- Path -->
+        <label for="node-input-path" style="width: 100%"><i class="fa fa-tasks"></i> Variable Path (Default):</label><br/>
         <input type="text" id="node-input-path" placeholder="PointFolder/PointName">
     </div>
     <div class="form-row">
+        <!-- Action -->
         <label for="node-input-action" style="width: 100%"><i class="fa fa-exchange"></i> Action (Default):</label><br/>
         <select type="text" id="node-input-action">
-            <option value="GET">Read</option>
-            <option value="POST">Write</option>
+            <option value="read">Read</option>
+            <option value="write">Write</option>
         </select>
     </div>
     <div class="form-row">
+        <!-- Value -->
         <label for="node-input-value" style="width: 100%"><i class="fa fa-tags"></i> Value (Default - Only Used if Action is Write):</label><br/>
         <input type="text" id="node-input-value">
         <input type="hidden" id="node-input-valueType">
@@ -63,25 +109,27 @@
 
 <!-- Help -->
 <script type="text/html" data-help-name="Niagara Obix Variable">
-    <p>A node that connects Node Red to Niagara through Obix Protocol. Returns an Object with the Variable/Point Name and the Value return from NIagara.</p>
+    <p>A node that connects Node Red to Niagara through Obix Protocol. Returns an Object with the Variable/Point Name and the Value.</p>
     
     <h3>Details</h3>
         <div>More Details about the input values can be found <a href="https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/tree/master/Variable">here</a></div>
     
-    <h3>Inputs</h3>
+    <h3>Inputs (Each is optional)</h3>
         <dl class="message-properties">
             <dt class="optional">username <span class="property-type">string</span></dt>
             <dd> the Niagara Obix Username. </dd>
             <dt class="optional">password <span class="property-type">string</span></dt>
             <dd> the Niagara Obix Password. </dd>
-            <dt class="optional">ipAddress <span class="property-type">string</span></dt>
+            <dt class="optional">host <span class="property-type">string</span></dt>
             <dd> the IP Address of the Niagara Station. </dd>
-            <dt class="optional">httpsPort <span class="property-type">number</span></dt>
-            <dd> the HTTPS Port for the Niagara Station. </dd>
+            <dt class="optional">protocol <span class="property-type">string</span></dt>
+            <dd> security protocol (must be either 'http' or 'https')</dd>
+            <dt class="optional">port <span class="property-type">number</span></dt>
+            <dd> the HTTPS/HTTP Port for the Niagara Station. </dd>
             <dt class="optional">path <span class="property-type">string</span></dt>
             <dd> a Path to the Variable/Point in the Niagara Station. </dd>
-            <dt class="optional">method <span class="property-type">string</span></dt>
-            <dd> provides the action (must be either 'GET' (for Reading) or 'POST' (for Writing)) </dd>
+            <dt class="optional">action <span class="property-type">string</span></dt>
+            <dd> provides the action (must be either 'read' or 'write') </dd>
             <dt class="optional">value <span class="property-type">string | boolean | number</span></dt>
             <dd> a value that overrides the default value from the node. </dd>
         </dl>
