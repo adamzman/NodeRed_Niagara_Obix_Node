@@ -15,7 +15,6 @@ To set up Obix in Niagara...
 5. Create a new user with an admin role, and select the HTTPBasicScheme for the Authentication Scheme Name.
    ![UserSetup](UserSetup.jpg?raw=true "UserSetup")
 
-
 # Nodes
 
 ## Niagara Obix Connector Node
@@ -77,11 +76,11 @@ Each instance of the Niagara Obix Node can have its values inserted dynamically.
 
 -   `msg.username` -> Username (String)
 -   `msg.password` -> Password (String)
--   `msg.ipAddress` -> IP Address (String)
--   `msg.mode` -> 'https' or 'http' (String)
--   `msg.httpsPort` -> HTTPS/HTTP Port (Number)
--   `msg.method` -> Action (msg.method must be either 'GET' (for Reading) or 'POST' (for Writing)) (String)
--   `msg.path` -> Path (String)
+-   `msg.host` -> IP Address (String)
+-   `msg.protocol` -> 'https' or 'http' (String)
+-   `msg.port` -> HTTPS/HTTP Port (Number)
+-   `msg.path` -> Path to Variable (String)
+-   `msg.action` -> 'read' or 'write' (String)
 -   `msg.value` -> Default Value (String, Boolean, or Number)
 
 ## Niagara Obix Watcher Node
