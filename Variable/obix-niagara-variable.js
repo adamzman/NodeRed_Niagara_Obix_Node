@@ -81,11 +81,11 @@ module.exports = function (RED) {
             try {
                 // Set up Axios Instance
                 var instance = axios.create({
-                    baseURL: (msg.protocol || node.serverConfig.mode) + '://' + (msg.host || node.serverConfig.host) + ':' + (msg.port || node.serverConfig.port) + '/obix/config/',
+                    baseURL: (msg.protocol || this.serverConfig.mode) + '://' + (msg.host || this.serverConfig.host) + ':' + (msg.port || this.serverConfig.port) + '/obix/config/',
                     timeout: 2000,
                     auth: {
-                        username: msg.username || node.serverConfig.username,
-                        password: msg.password || node.serverConfig.password
+                        username: msg.username || this.serverConfig.username,
+                        password: msg.password || this.serverConfig.password
                     },
                     httpsAgent: new https.Agent({ rejectUnauthorized: false }),
                     transformResponse: [function (data) {
