@@ -33,9 +33,9 @@ module.exports = function (RED) {
                 '\n1. Ensure the obix driver is placed directly under the Drivers in the Niagara tree (Check Documentation in Github for more details)';
         }
         // If invalid Path
-        else if (error == "Invalid Path") {
+        else if (error.includes("Invalid Path:")) {
             node.status({ fill: "yellow", shape: "dot", text: "invalid path" });
-            node.error({ invalidPath: node.path }, msg);
+            node.error({ invalidPath: error.split(":").pop() }, msg);
             return;
         }
         // If input type
@@ -117,7 +117,7 @@ module.exports = function (RED) {
 
                 // Catch Bad Path
                 if (response.data.err) {
-                    if (response.data.err._attributes.is == "obix:BadUriErr") { throw "Invalid Path"; }
+                    if (response.data.err._attributes.is == "obix:BadUriErr") { throw "Invalid Path:" + path; }
                     if (response.data.err._attributes.display.includes("Invalid")) { throw "Invalid Input Type"; }
                 }
 
