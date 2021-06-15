@@ -67,17 +67,17 @@ module.exports = function (RED) {
             var inDepthError = 'Check the port and security protocol';
         }
         // Start Invalid Timestamp
-        else if (error = "HistoryQuery Start Invalid Timestamp") {
+        else if (error == "HistoryQuery Start Invalid Timestamp") {
             var friendlyError = "historyQuery.start invalid timestamp";
             var inDepthError = 'HistoryQuery Start Invalid Timestamp: Make a valid timestamp';
         }
         // End Invalid Timestamp
-        else if (error = "HistoryQuery End Invalid Timestamp") {
+        else if (error == "HistoryQuery End Invalid Timestamp") {
             var friendlyError = "historyQuery.end invalid timestamp";
             var inDepthError = 'HistoryQuery End Invalid Timestamp: Make a valid timestamp';
         }
         // Limit Invalid
-        else if (error = "HistoryQuery Limit Invalid") {
+        else if (error == "HistoryQuery Limit Invalid") {
             var friendlyError = "historyQuery.limit invalid";
             var inDepthError = 'HistoryQuery Limit Invalid: Make a valid integer';
         }
@@ -93,18 +93,27 @@ module.exports = function (RED) {
 
     function parseData(node, msg, data, path) {
         try {
-            values = [];
-            timezone = data.abstime[0]._attributes.tz;
-            limit = data.int._attributes.val;
-            start = moment(data.abstime[0]._attributes.val).tz(timezone).format('LLLL z');
-            end = moment(data.abstime[1]._attributes.val).tz(timezone).format('LLLL z');
+            var values = [];
+            var timezone = data.abstime[0]._attributes.tz;
+            var limit = data.int._attributes.val;
+            var start = moment(data.abstime[0]._attributes.val).tz(timezone).format('LLLL z');
+            var end = moment(data.abstime[1]._attributes.val).tz(timezone).format('LLLL z');
 
-            data.list.obj.forEach(dataItem => {
+            if (Array.isArray(data.list.obj)) {
+                data.list.obj.forEach(dataItem => {
+                    values.push({
+                        "Timestamp": moment(dataItem.abstime._attributes.val).tz(timezone).format('LLLL z'),
+                        "Value": String(dataItem.real._attributes.val)
+                    });
+                })
+            }
+            // If only one value in table
+            else if (data.list.obj) {
                 values.push({
-                    "Timestamp": moment(dataItem.abstime._attributes.val).tz(timezone).format('LLLL z'),
-                    "Value": String(dataItem.real._attributes.val)
+                    "Timestamp": moment(data.list.obj.abstime._attributes.val).tz(timezone).format('LLLL z'),
+                    "Value": String(data.list.obj.real._attributes.val)
                 });
-            })
+            }
 
             var payload = {
                 "History": path,
