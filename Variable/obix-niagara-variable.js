@@ -33,12 +33,18 @@ module.exports = function (RED) {
                 '\n1. Ensure the obix driver is placed directly under the Drivers in the Niagara tree (Check Documentation in Github for more details)';
         }
         // If invalid Path
-        else if (error.includes("Invalid Path:")) {
+        else if (String(error).includes("Invalid Path:")) {
             node.status({ fill: "yellow", shape: "dot", text: "invalid path" });
             node.error({ invalidPath: error.split(":").pop() }, msg);
             return;
         }
-        // If input type
+        // If invalid https/http
+        else if (error == "Invalid Security Protocol") {
+            var friendlyError = "Invalid Security Protocol";
+            var inDepthError = 'Invalid Security Protocol:\n' +
+                '\nmsg.protocol must be either "https" or "http"';
+        }
+        // If invalid input type
         else if (error == "Invalid Input Type") {
             var friendlyError = "Invalid Input Type";
             var inDepthError = 'Invalid Input Type:\n' +
@@ -55,7 +61,7 @@ module.exports = function (RED) {
             var inDepthError = 'Action must be "read" or "write"';
         }
         // Possibly Wrong Port
-        else if (error.message.includes("wrong version number")) {
+        else if (String(error.message).includes("wrong version number")) {
             var friendlyError = "Possibly Wrong Port/Protocol";
             var inDepthError = 'Check the port and security protocol';
         }
@@ -79,9 +85,19 @@ module.exports = function (RED) {
 
         this.on("input", async function (msg, send, done) {
             try {
+                // Setting all variables if passed in, if not, we will use the preset values
+                var topic = n.topic || msg.topic;
+                var mode = msg.protocol || this.serverConfig.mode;
+                var path = msg.path || n.path;
+                var action = msg.action || n.action;
+                var value = msg.value || n.value;
+
+                if (action != "read" && action != "write") { throw "Invalid Data Action" }
+                if (mode != "https" && mode != "http") { throw "Invalid Security Protocol" }
+
                 // Set up Axios Instance
                 var instance = axios.create({
-                    baseURL: (msg.protocol || this.serverConfig.mode) + '://' + (msg.host || this.serverConfig.host) + ':' + (msg.port || this.serverConfig.port) + '/obix/config/',
+                    baseURL: mode + '://' + (msg.host || this.serverConfig.host) + ':' + (msg.port || this.serverConfig.port) + '/obix/config/',
                     timeout: 2000,
                     auth: {
                         username: msg.username || this.serverConfig.username,
@@ -96,15 +112,6 @@ module.exports = function (RED) {
                         }
                     }],
                 })
-
-                // Setting all variables if passed in, if not, we will use the preset values
-                var topic = n.topic || msg.topic;
-                var path = msg.path || n.path;
-                var action = msg.action || n.action;
-                var value = msg.value || n.value;
-                var mode = msg.mode || this.serverConfig.mode;
-
-                if (action != "read" && action != "write") { throw "Invalid Data Action" }
 
                 // Slice '/' from the path if it exists
                 path.charAt(path.length - 1) == '/' ? path = path.slice(0, -1) : null;
