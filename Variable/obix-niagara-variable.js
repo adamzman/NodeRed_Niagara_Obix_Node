@@ -102,14 +102,14 @@ module.exports = function (RED) {
                 var path = msg.path || n.path;
                 var action = msg.action || n.action;
                 var value = msg.value || n.value;
-                var mode = msg.mode || node.serverConfig.mode;
+                var mode = msg.mode || this.serverConfig.mode;
 
                 if (action != "read" && action != "write") { throw "Invalid Data Action" }
 
                 // Slice '/' from the path if it exists
                 path.charAt(path.length - 1) == '/' ? path = path.slice(0, -1) : null;
                 path.charAt(0) == '/' ? path = path.slice(1) : null;
-                node.status({ fill: "blue", shape: "ring", text: "Pulling..." });
+                this.status({ fill: "blue", shape: "ring", text: "Pulling..." });
 
                 // If Reading/Writing Variable
                 var response = action == "read" ? await instance.get(path + "/out/") :
@@ -134,8 +134,8 @@ module.exports = function (RED) {
                     "Value": result,
                 };
 
-                node.status({ fill: mode == "http" ? "yellow" : "green", shape: "ring", text: "Success" });
-                node.send(msg);
+                this.status({ fill: mode == "http" ? "yellow" : "green", shape: "ring", text: "Success" });
+                this.send(msg);
             } catch (error) {
                 handleErrors(error, node, msg);
             }
