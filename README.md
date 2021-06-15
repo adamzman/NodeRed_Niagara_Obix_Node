@@ -39,9 +39,9 @@ Each instance of the Niagara Obix Node can have its values inserted dynamically.
 
 -   `msg.username` -> Username (String)
 -   `msg.password` -> Password (String)
--   `msg.ipAddress` -> IP Address (String)
--   `msg.mode` -> 'https' or 'http' (String)
--   `msg.httpsPort` -> HTTPS/HTTP Port (Number)
+-   `msg.host` -> IP Address (String)
+-   `msg.protocol` -> 'https' or 'http' (String)
+-   `msg.port` -> HTTPS/HTTP Port (Number)
 -   `msg.path` -> Path (String)
 -   `msg.historyQuery` -> History Query (Overrides the PresetQuery Selection) (JSON Object : See formatting options below)
 -   `msg.presetQuery` -> Use a Preset History Query (Overrides the PresetQuery Selection) (String : Values must be one of the following)
