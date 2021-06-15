@@ -8,12 +8,12 @@ To set up Obix in Niagara...
 
 1. Open the obixDriver module from the palette.
 2. Drag in the Obix Network (from the palette) into the station's driver folder.
-   ![ObixDriverSetup](ObixDriverSetup.jpg?raw=true "ObixDriverSetup")
+   ![ObixDriverSetup](.ObixDriverSetup.jpg?raw=true "ObixDriverSetup")
 3. Open the baja module from the palette.
 4. Insert the HTTPBasicScheme `(baja -> AuthenticationSchemes -> WebServicesSchemes)` into the Authentication Service in the Services folder `(Config -> Services -> AuthenticationService -> Authentication Schemes)`.
-   ![HTTPBasicSetup](HTTPBasicSetup.jpg?raw=true "HTTPBasicSetup")
+   ![HTTPBasicSetup](.HTTPBasicSetup.jpg?raw=true "HTTPBasicSetup")
 5. Create a new user with an admin role, and select the HTTPBasicScheme for the Authentication Scheme Name.
-   ![UserSetup](UserSetup.jpg?raw=true "UserSetup")
+   ![UserSetup](.UserSetup.jpg?raw=true "UserSetup")
 
 # Nodes
 
@@ -94,5 +94,5 @@ The inject button is similar to redeploying node red. It just restarts the poll.
 -   **Search Paths** - Searches through the list of paths that are configured below.
 -   **Paths** - The list of paths that are returned on each pull. Add a new Path by clicking the "Add New Path" and Delete a path by clicking the "x" next to the path. You can also sort the list by clicking the sort button or dragging the three bars next to the path. The duplicate button does duplicates the values of that row to a new row.
 
-![Example of Niagara Tree](Watcher/niagara.jpg?raw=true "Example of Niagara Tree")
-![Example of Node Red configuration](Watcher/nodered.jpg?raw=true "Example of Node Red configuration")
+![Example of Niagara Tree](Watcher/.niagara.jpg?raw=true "Example of Niagara Tree")
+![Example of Node Red configuration](Watcher/.nodered.jpg?raw=true "Example of Node Red configuration")
