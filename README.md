@@ -12,7 +12,7 @@ To set up Obix in Niagara...
 3. Open the baja module from the palette.
 4. Insert the HTTPBasicScheme `(baja -> AuthenticationSchemes -> WebServicesSchemes)` into the Authentication Service in the Services folder `(Config -> Services -> AuthenticationService -> Authentication Schemes)`.
    ![HTTPBasicSetup](https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/blob/master/HTTPBasicSetup.jpg?raw=true "HTTPBasicSetup")
-5. Create a new user with an admin role, and select the HTTPBasicScheme for the Authentication Scheme Name.
+5. Create a new user with an assigned role (role must have correct permissions to read/write to any points or histories), and select the HTTPBasicScheme for the Authentication Scheme Name.
    ![UserSetup](https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/blob/master/UserSetup.jpg?raw=true "UserSetup")
 
 # Nodes
@@ -21,7 +21,7 @@ To set up Obix in Niagara...
 
 Holds the configuration values for the Niagara Obix Nodes
 
--   **Username** - Set to the Obix User that has been set up in Niagara using the HTTPBasic Authentication Schema... Obix User must also be set to admin role.
+-   **Username** - Set to the Obix User that has been set up in Niagara using the HTTPBasic Authentication Schema... Obix User must have a role with the correct permissions to read/write to any points or histories.
 -   **Password** - Password for the Obix User.
 -   **IP Address** - IP Address of the Niagara Station.
 -   **HTTPS/HTTP Port** - HTTPS/HTTP Port for the Niagara Station... HTTPS/HTTP must be enabled in the Web Services, and the Port must be exposed on the Niagara Machine (Unless accessing from localhost only).
