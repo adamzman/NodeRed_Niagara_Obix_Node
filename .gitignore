@@ -1,5 +1,4 @@
 /node_modules
 
-# Hide all hidden folder and files
-.*/
-.*
+.vscode
+.example.json

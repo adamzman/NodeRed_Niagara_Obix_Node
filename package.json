@@ -1,27 +1,30 @@
 {
-	"name": "node-red-contrib-obix-niagara-connector",
-	"version": "2.0.4",
-	"description": "Connector from Niagara to Node-Red using Obix",
-	"author": "Adam Zimmerman",
-	"keywords": [
-		"node-red",
-		"Tridium",
-		"Niagara",
-		"Obix"
-	],
-	"node-red": {
-		"nodes": {
-			"Niagara Obix Connector": "Connector/obix-niagara-connector.js",
-			"Niagara Obix History": "History/obix-niagara-history.js",
-			"Niagara Obix Variable": "Variable/obix-niagara-variable.js",
-			"Niagara Obix Watcher": "Watcher/obix-niagara-watcher.js"
-		}
-	},
-	"dependencies": {
-		"axios": "^0.21.0",
-		"moment-timezone": "^0.5.31",
-		"xml-js": "^1.6.11"
-	},
-	"homepage": "https://github.com/adamz0210/NodeRed_Niagara_Obix_Node",
-	"license": "ISC"
+  "name": "node-red-contrib-obix-niagara-connector",
+  "version": "2.0.4",
+  "description": "Connector from Niagara to Node-Red using Obix",
+  "author": "Adam Zimmerman",
+  "keywords": [
+    "node-red",
+    "Tridium",
+    "Niagara",
+    "Obix"
+  ],
+  "node-red": {
+    "nodes": {
+      "Niagara Obix Connector": "Connector/obix-niagara-connector.js",
+      "Niagara Obix History": "History/obix-niagara-history.js",
+      "Niagara Obix Variable": "Variable/obix-niagara-variable.js",
+      "Niagara Obix Watcher": "Watcher/obix-niagara-watcher.js"
+    }
+  },
+  "dependencies": {
+    "axios": "^0.21.0",
+    "moment-timezone": "^0.5.31",
+    "xml-js": "^1.6.11"
+  },
+  "homepage": "https://github.com/adamz0210/NodeRed_Niagara_Obix_Node",
+  "license": "ISC",
+  "devDependencies": {
+    "prettier": "^2.7.1"
+  }
 }

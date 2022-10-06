@@ -1,129 +1,137 @@
 <!-- How the node actually looks -->
 <script type="text/javascript">
-    RED.nodes.registerType('Niagara Obix History', {
-        category: 'Niagara Obix',
-        color: '#0088CE',
-        defaults: {
-            name: { value: "" },
-            serverConfig: { value: "", type: "Niagara Obix Connector" },
-            topic: { value: "" },
-            path: { value: "" },
-            presetQuery: { value: "yesterday" }
-        },
-        inputs: 1,
-        outputs: 1,
-        icon: "font-awesome/fa-line-chart",
-        button: {
-            enabled: function () {
-                return !this.changed
-            },
-            onclick: function () {
-                if (this.changed) {
-                    return RED.notify(RED._("notification.warning", { message: RED._("notification.warnings.undeployedChanges") }), "warning");
-                }
-
-                var label = this._def.label.call(this);
-                if (label.length > 30) {
-                    label = label.substring(0, 50) + "...";
-                }
-                label = label.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                var node = this;
-                $.ajax({
-                    url: "obixhistory/" + this.id,
-                    type: "POST",
-                    success: function (resp) {
-                        RED.notify(node._("Injecting", { label: label }), { type: "success", id: "inject", timeout: 2000 });
-                    },
-                    error: function (jqXHR, textStatus, errorThrown) {
-                        if (jqXHR.status == 404) {
-                            RED.notify(node._("common.notification.error", { message: node._("common.notification.errors.not-deployed") }), "error");
-                        } else if (jqXHR.status == 500) {
-                            RED.notify(node._("common.notification.error", { message: node._("inject.errors.failed") }), "error");
-                        } else if (jqXHR.status == 0) {
-                            RED.notify(node._("common.notification.error", { message: node._("common.notification.errors.no-response") }), "error");
-                        } else {
-                            RED.notify(node._("common.notification.error", { message: node._("common.notification.errors.unexpected", { status: jqXHR.status, message: textStatus }) }), "error");
-                        }
-                    }
-                });
-            }
-        },
-        label: function () {
-            return this.name || "Niagara Obix History";
+  RED.nodes.registerType('Niagara Obix History', {
+    category: 'Niagara Obix',
+    color: '#0088CE',
+    defaults: {
+      name: { value: '' },
+      serverConfig: { value: '', type: 'Niagara Obix Connector' },
+      topic: { value: '' },
+      path: { value: '' },
+      presetQuery: { value: 'yesterday' },
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: 'font-awesome/fa-line-chart',
+    button: {
+      enabled: function () {
+        return !this.changed;
+      },
+      onclick: function () {
+        if (this.changed) {
+          return RED.notify(RED._('notification.warning', { message: RED._('notification.warnings.undeployedChanges') }), 'warning');
         }
-    });
+
+        var label = this._def.label.call(this);
+        if (label.length > 30) {
+          label = label.substring(0, 50) + '...';
+        }
+        label = label.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        var node = this;
+        $.ajax({
+          url: 'obixhistory/' + this.id,
+          type: 'POST',
+          success: function (resp) {
+            RED.notify(node._('Injecting', { label: label }), { type: 'success', id: 'inject', timeout: 2000 });
+          },
+          error: function (jqXHR, textStatus, errorThrown) {
+            if (jqXHR.status == 404) {
+              RED.notify(node._('common.notification.error', { message: node._('common.notification.errors.not-deployed') }), 'error');
+            } else if (jqXHR.status == 500) {
+              RED.notify(node._('common.notification.error', { message: node._('inject.errors.failed') }), 'error');
+            } else if (jqXHR.status == 0) {
+              RED.notify(node._('common.notification.error', { message: node._('common.notification.errors.no-response') }), 'error');
+            } else {
+              RED.notify(
+                node._('common.notification.error', {
+                  message: node._('common.notification.errors.unexpected', { status: jqXHR.status, message: textStatus }),
+                }),
+                'error'
+              );
+            }
+          },
+        });
+      },
+    },
+    label: function () {
+      return this.name || 'Niagara Obix History';
+    },
+  });
 </script>
 
 <!-- Input to configure -->
 <script type="text/html" data-template-name="Niagara Obix History">
-    <div class="form-row">
-        <!-- Name -->
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name:</label>
-        <input type="text" id="node-input-name" placeholder="Name">
-    </div>
-    <div class="form-row">
-        <!-- Server Config -->
-        <label for="node-input-serverConfig"><i class="fa fa-globe"></i> Connector:</label>
-        <input type="text" id="node-input-serverConfig">
-    </div><hr/>
-    <div class="form-row">
-        <!-- Topic -->
-        <label for="node-input-topic" style="width: 100%"><i class="fa fa-tasks"></i> Topic:</label>
-        <input type="text" id="node-input-topic">
-    </div>
-    <div class="form-row">
-        <!-- Path -->
-        <label for="node-input-path" style="width: 100%"><i class="fa fa-tasks"></i> History Path  (Default):</label><br/>
-        <input type="text" id="node-input-path" placeholder="HistoryFolder/HistoryName">
-    </div>
-    <div class="form-row">
-        <!-- Query -->
-        <label for="node-input-presetQuery" style="width: 100%"><i class="fa fa-exchange"></i> Preset Query (Default):</label><br/>
-        <select type="text" id="node-input-presetQuery">
-            <option value="yesterday">Yesterday</option>
-            <option value="last24Hours">Last 24 Hours</option>
-            <option value="weekToDate">Week to Date</option>
-            <option value="lastWeek">Last Week</option>
-            <option value="last7Days">Last 7 Days</option>
-            <option value="monthToDate">Month to Date</option>
-            <option value="lastMonth">Last Month</option>
-            <option value="yearToDate (limit=1000)">Year to Date (Only First 1000 Records)</option>
-            <option value="lastYear (limit=1000)">Last Year (Only First 1000 Records)</option>
-            <option value="unboundedQuery">Unbounded Query (Only First 1000 Records)</option>
-        </select>
-    </div>
+  <div class="form-row">
+    <!-- Name -->
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name:</label>
+    <input type="text" id="node-input-name" placeholder="Name" />
+  </div>
+  <div class="form-row">
+    <!-- Server Config -->
+    <label for="node-input-serverConfig"><i class="fa fa-globe"></i> Connector:</label>
+    <input type="text" id="node-input-serverConfig" />
+  </div>
+  <hr />
+  <div class="form-row">
+    <!-- Topic -->
+    <label for="node-input-topic" style="width: 100%"><i class="fa fa-tasks"></i> Topic:</label>
+    <input type="text" id="node-input-topic" />
+  </div>
+  <div class="form-row">
+    <!-- Path -->
+    <label for="node-input-path" style="width: 100%"><i class="fa fa-tasks"></i> History Path (Default):</label><br />
+    <input type="text" id="node-input-path" placeholder="HistoryFolder/HistoryName" />
+  </div>
+  <div class="form-row">
+    <!-- Query -->
+    <label for="node-input-presetQuery" style="width: 100%"><i class="fa fa-exchange"></i> Preset Query (Default):</label><br />
+    <select type="text" id="node-input-presetQuery">
+      <option value="yesterday">Yesterday</option>
+      <option value="last24Hours">Last 24 Hours</option>
+      <option value="weekToDate">Week to Date</option>
+      <option value="lastWeek">Last Week</option>
+      <option value="last7Days">Last 7 Days</option>
+      <option value="monthToDate">Month to Date</option>
+      <option value="lastMonth">Last Month</option>
+      <option value="yearToDate (limit=1000)">Year to Date (Only First 1000 Records)</option>
+      <option value="lastYear (limit=1000)">Last Year (Only First 1000 Records)</option>
+      <option value="unboundedQuery">Unbounded Query (Only First 1000 Records)</option>
+    </select>
+  </div>
 </script>
 
 <!-- Help -->
 <script type="text/html" data-help-name="Niagara Obix History">
-    <p>A node that connects Node Red to Niagara through Obix Protocol. Returns an Array of History Records from a Niagara History.</p>
-    
-    <h3>Details</h3>
-        <div>More Details about the input values can be found <a href="https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/tree/master/History">here</a></div>
-    
-    <h3>Inputs (Each is optional)</h3>
-        <dl class="message-properties">
-            <dt class="optional">username <span class="property-type">string</span></dt>
-            <dd> the Niagara Obix Username. </dd>
-            <dt class="optional">password <span class="property-type">string</span></dt>
-            <dd> the Niagara Obix Password. </dd>
-            <dt class="optional">host <span class="property-type">string</span></dt>
-            <dd> the IP Address of the Niagara Station. </dd>
-            <dt class="optional">protocol <span class="property-type">string</span></dt>
-            <dd> security protocol (must be either 'http' or 'https')</dd>
-            <dt class="optional">port <span class="property-type">number</span></dt>
-            <dd> the HTTPS/HTTP Port for the Niagara Station. </dd>
-            <dt class="optional">path <span class="property-type">string</span></dt>
-            <dd> a Path to the Variable/Point in the Niagara Station. </dd>
-            <dt class="optional">historyQuery <span class="property-type">object</span></dt>
-            <dd> a History Query (Overrides the PresetQuery Selection) </dd>
-            <dt class="optional">presetQuery <span class="property-type">string</span></dt>
-            <dd> a Preset History Query (Overrides the PresetQuery Selection) </dd>
-        </dl>
+  <p>A node that connects Node Red to Niagara through Obix Protocol. Returns an Array of History Records from a Niagara History.</p>
 
-    <h3>Outputs</h3>
-        <dl class="message-properties">
-            <dt>payload <span class="property-type">object</span></dt>
-            <dd>an Object Containing Information about the Query, and an Array of the Records returned.</dd>
-        </dl>
+  <h3>Details</h3>
+  <div>
+    More Details about the input values can be found <a href="https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/tree/master/History">here</a>
+  </div>
+
+  <h3>Inputs (Each is optional)</h3>
+  <dl class="message-properties">
+    <dt class="optional">username <span class="property-type">string</span></dt>
+    <dd>the Niagara Obix Username.</dd>
+    <dt class="optional">password <span class="property-type">string</span></dt>
+    <dd>the Niagara Obix Password.</dd>
+    <dt class="optional">host <span class="property-type">string</span></dt>
+    <dd>the IP Address of the Niagara Station.</dd>
+    <dt class="optional">protocol <span class="property-type">string</span></dt>
+    <dd>security protocol (must be either 'http' or 'https')</dd>
+    <dt class="optional">port <span class="property-type">number</span></dt>
+    <dd>the HTTPS/HTTP Port for the Niagara Station.</dd>
+    <dt class="optional">path <span class="property-type">string</span></dt>
+    <dd>a Path to the Variable/Point in the Niagara Station.</dd>
+    <dt class="optional">historyQuery <span class="property-type">object</span></dt>
+    <dd>a History Query (Overrides the PresetQuery Selection)</dd>
+    <dt class="optional">presetQuery <span class="property-type">string</span></dt>
+    <dd>a Preset History Query (Overrides the PresetQuery Selection)</dd>
+  </dl>
+
+  <h3>Outputs</h3>
+  <dl class="message-properties">
+    <dt>payload <span class="property-type">object</span></dt>
+    <dd>an Object Containing Information about the Query, and an Array of the Records returned.</dd>
+  </dl>
 </script>
