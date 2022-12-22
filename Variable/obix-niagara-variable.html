@@ -16,6 +16,15 @@
       valueType: {
         value: 'bool',
       },
+      batchJson: {
+        value: `[
+  {
+    "path": "Test/Path",
+    "action": "read/write",
+    "value": 100
+  }
+]`,
+      },
     },
     inputs: 1,
     outputs: 1,
@@ -29,12 +38,12 @@
           return RED.notify(RED._('notification.warning', { message: RED._('notification.warnings.undeployedChanges') }), 'warning');
         }
 
-        var label = this._def.label.call(this);
+        let label = this._def.label.call(this);
         if (label.length > 30) {
           label = label.substring(0, 50) + '...';
         }
         label = label.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        var node = this;
+        const node = this;
         $.ajax({
           url: 'obixvariable/' + this.id,
           type: 'POST',
@@ -70,6 +79,51 @@
         typeField: $('#node-input-valueType'),
         types: ['bool', 'str', 'num'],
       });
+      $('#node-input-action').change(function () {
+        switch ($(this).val()) {
+          case 'write':
+            $('.write-type-row').show();
+            $('.write-read-type-row').show();
+            $('.batch-type-row').hide();
+            break;
+          case 'read':
+            $('.write-type-row').hide();
+            $('.write-read-type-row').show();
+            $('.batch-type-row').hide();
+            break;
+          case 'batch':
+            $('.write-type-row').hide();
+            $('.batch-type-row').show();
+            $('.write-read-type-row').hide();
+            break;
+        }
+      });
+      $('#node-input-action').typedInput({
+        types: [
+          {
+            options: [
+              { value: 'read', label: 'Read' },
+              { value: 'write', label: 'Write' },
+              { value: 'batch', label: 'Batch' },
+            ],
+          },
+        ],
+      });
+      this.jsonBatchEditor = RED.editor.createEditor({
+        id: 'node-input-batchJson-editor',
+        mode: 'ace/mode/json',
+        value: $('#node-input-batchJson').val(),
+      });
+      this.jsonBatchEditor.focus();
+    },
+    oneditsave: function () {
+      $('#node-input-batchJson').val(this.jsonBatchEditor.getValue());
+      this.jsonBatchEditor.destroy();
+      delete this.jsonBatchEditor;
+    },
+    oneditcancel: function () {
+      this.jsonBatchEditor.destroy();
+      delete this.jsonBatchEditor;
     },
   });
 </script>
@@ -89,27 +143,29 @@
   <hr />
   <div class="form-row">
     <!-- Topic -->
-    <label for="node-input-topic" style="width: 100%"><i class="fa fa-tasks"></i> Topic:</label>
+    <label for="node-input-topic"><i class="fa fa-tasks"></i> Topic:</label>
     <input type="text" id="node-input-topic" />
   </div>
   <div class="form-row">
+    <!-- Action -->
+    <label for="node-input-action"><i class="fa fa-exchange"></i> Action:</label>
+    <input type="text" id="node-input-action" />
+  </div>
+  <div class="form-row write-read-type-row">
     <!-- Path -->
-    <label for="node-input-path" style="width: 100%"><i class="fa fa-tasks"></i> Variable Path (Default):</label><br />
+    <label for="node-input-path"><i class="fa fa-tasks"></i> Path:</label>
     <input type="text" id="node-input-path" placeholder="PointFolder/PointName" />
   </div>
-  <div class="form-row">
-    <!-- Action -->
-    <label for="node-input-action" style="width: 100%"><i class="fa fa-exchange"></i> Action (Default):</label><br />
-    <select type="text" id="node-input-action">
-      <option value="read">Read</option>
-      <option value="write">Write</option>
-    </select>
-  </div>
-  <div class="form-row">
+  <div class="form-row write-type-row">
     <!-- Value -->
-    <label for="node-input-value" style="width: 100%"><i class="fa fa-tags"></i> Value (Default - Only Used if Action is Write):</label><br />
+    <label for="node-input-value"><i class="fa fa-tags"></i> Value:</label>
     <input type="text" id="node-input-value" />
     <input type="hidden" id="node-input-valueType" />
+  </div>
+  <div class="form-row batch-type-row">
+    <!-- JSON Batch -->
+    <div style="height: 300px; min-height: 200px;" class="node-text-editor " id="node-input-batchJson-editor"></div>
+    <input type="hidden" id="node-input-batchJson" />
   </div>
 </script>
 

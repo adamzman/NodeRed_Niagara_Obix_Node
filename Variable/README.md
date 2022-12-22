@@ -18,3 +18,5 @@ Each instance of the Niagara Obix Node can have its values inserted dynamically.
 - `msg.path` -> Path to Variable (String)
 - `msg.action` -> 'read' or 'write' (String)
 - `msg.value` -> Default Value (String, Boolean, or Number)
+
+<!-- TODO: add batch to drop down actions and have ability to insert JSON -->
