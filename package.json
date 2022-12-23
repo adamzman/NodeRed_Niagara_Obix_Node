@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-obix-niagara-connector",
-  "version": "2.0.4",
+  "version": "3.0.0",
   "description": "Connector from Niagara to Node-Red using Obix",
   "author": "Adam Zimmerman",
   "keywords": [
@@ -20,6 +20,7 @@
   "dependencies": {
     "axios": "^0.21.0",
     "moment-timezone": "^0.5.31",
+    "obix-js": "^0.0.1",
     "xml-js": "^1.6.11"
   },
   "homepage": "https://github.com/adamz0210/NodeRed_Niagara_Obix_Node",
