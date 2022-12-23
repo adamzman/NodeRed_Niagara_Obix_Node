@@ -160,7 +160,7 @@
 
 <!-- Help -->
 <script type="text/html" data-help-name="Niagara Obix Variable">
-  <p>A node that connects Node Red to Niagara through Obix Protocol. Returns an Object with the Variable/Point Name and the Value.</p>
+  <p>A node that connects Node Red to Niagara through Obix Protocol. Returns an Object || Object[] with the Variable/Point Name and the Value.</p>
 
   <h3>Details</h3>
   <div>
@@ -184,14 +184,16 @@
     <dt class="optional">path <span class="property-type">string</span></dt>
     <dd>a Path to the Variable/Point in the Niagara Station.</dd>
     <dt class="optional">action <span class="property-type">string</span></dt>
-    <dd>provides the action (must be either 'read' or 'write')</dd>
+    <dd>provides the action (must be 'read', 'write', or 'batch')</dd>
     <dt class="optional">value <span class="property-type">string | boolean | number</span></dt>
     <dd>a value that overrides the default value from the node.</dd>
+    <dt class="optional">batch <span class="property-type">object | object[]</span></dt>
+    <dd>a value that overrides the default batch from the node. ex. [{ path: 'Point/Test', action: 'write', value: 'test' }]</dd>
   </dl>
 
   <h3>Outputs</h3>
   <dl class="message-properties">
     <dt>payload <span class="property-type">object</span></dt>
-    <dd>an Object Containing Information about the Variable returned from Niagara.</dd>
+    <dd>an Object / Object[] returned from Niagara.</dd>
   </dl>
 </script>

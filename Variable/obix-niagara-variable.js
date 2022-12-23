@@ -17,7 +17,6 @@ module.exports = function (RED) {
     node.serverConfig = RED.nodes.getNode(config.serverConfig);
 
     node.on('input', async function (msg, send, done) {
-      // Compatibility with older Node Red versions
       // prettier-ignore
       send = send || function() { node.send.apply(node, arguments) }
       try {
@@ -32,7 +31,6 @@ module.exports = function (RED) {
         const obix = new ObixInstance(axiosConfig);
         node.status({ fill: 'blue', shape: 'ring', text: 'Pulling...' });
         const action = msg.action || config.action;
-        console.log(action);
         switch (action) {
           case 'read':
             result = await obix.obixRead({ path: msg.path || config.path });
@@ -41,7 +39,7 @@ module.exports = function (RED) {
             result = await obix.obixWrite({ path: msg.path || config.path, value: msg.value || config.value });
             break;
           case 'batch':
-            result = await obix.obixBatch({ batch: JSON.parse(msg.path || msg.batch || config.batch || null) });
+            result = await obix.obixBatch({ batch: JSON.parse(msg.batch || msg.path || config.batch || null) });
             shouldWarn = result.find((r) => r.error);
             warnReason = 'Batch contains an error';
             break;

@@ -69,6 +69,7 @@ Returns/Writes points to the Niagara using the obix protocol. **Can only read th
 - **Path** - Used to indicate which variable/point you want to interact with... Path starts after config... ex. config/TestFolder/TestPoint, only take "TestFolder/TestPoint".
 - **Action** - Pick whether you want to read or write to a specific variable/point in the station's config folder.
 - **Value** - If `Action` is set to `Write`, this is the default value that will be written to the point specified in the path.
+- **Batch** - If `Action` is set to `Batch`, this is the default batch command ex. [{ path: 'Point/Test', action: 'write', value: 'test' }].
 
 ### Dynamic Values
 
@@ -81,7 +82,8 @@ Each instance of the Niagara Obix Node can have its values inserted dynamically.
 - `msg.port` -> HTTPS/HTTP Port (Number)
 - `msg.path` -> Path to Variable (String)
 - `msg.action` -> 'read' or 'write' (String)
-- `msg.value` -> Default Value (String, Boolean, or Number)
+- `msg.value` -> Value used when writing to path (String, Boolean, or Number)
+- `msg.batch || msg.path` -> Batch Read/Write (Object or Object[] : [{ path, action, value }])
 
 ## Niagara Obix Watcher Node
 
