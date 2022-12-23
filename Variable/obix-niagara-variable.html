@@ -16,7 +16,7 @@
       valueType: {
         value: 'bool',
       },
-      batchJson: {
+      batch: {
         value: `[
   {
     "path": "Test/Path",
@@ -93,8 +93,8 @@
             break;
           case 'batch':
             $('.write-type-row').hide();
-            $('.batch-type-row').show();
             $('.write-read-type-row').hide();
+            $('.batch-type-row').show();
             break;
         }
       });
@@ -109,21 +109,10 @@
           },
         ],
       });
-      this.jsonBatchEditor = RED.editor.createEditor({
-        id: 'node-input-batchJson-editor',
-        mode: 'ace/mode/json',
-        value: $('#node-input-batchJson').val(),
+      $('#node-input-batch').typedInput({
+        type: 'json',
+        types: ['json'],
       });
-      this.jsonBatchEditor.focus();
-    },
-    oneditsave: function () {
-      $('#node-input-batchJson').val(this.jsonBatchEditor.getValue());
-      this.jsonBatchEditor.destroy();
-      delete this.jsonBatchEditor;
-    },
-    oneditcancel: function () {
-      this.jsonBatchEditor.destroy();
-      delete this.jsonBatchEditor;
     },
   });
 </script>
@@ -164,8 +153,8 @@
   </div>
   <div class="form-row batch-type-row">
     <!-- JSON Batch -->
-    <div style="height: 300px; min-height: 200px;" class="node-text-editor " id="node-input-batchJson-editor"></div>
-    <input type="hidden" id="node-input-batchJson" />
+    <label for="node-input-batch"><i class="fa fa-tags"></i> Batch:</label>
+    <input type="text" id="node-input-batch" />
   </div>
 </script>
 

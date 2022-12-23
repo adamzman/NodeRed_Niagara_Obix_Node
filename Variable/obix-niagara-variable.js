@@ -1,4 +1,15 @@
+class InvalidActionError extends Error {
+  constructor() {
+    super(`Invalid Action : allowed action include "read", "write", or "batch"`);
+    this.name = 'InvalidActionError';
+    this.friendlyError = 'Invalid Action';
+    this.inDepthError = this.message;
+  }
+}
+
 module.exports = function (RED) {
+  const { ObixInstance } = require('obix-js');
+
   function VariableNode(config) {
     RED.nodes.createNode(this, config);
     const node = this;
@@ -10,7 +21,7 @@ module.exports = function (RED) {
       // prettier-ignore
       send = send || function() { node.send.apply(node, arguments) }
       try {
-        let response, result;
+        let result, shouldWarn, warnReason;
         const axiosConfig = {
           mode: msg.protocol || node.serverConfig.mode,
           host: msg.host || node.serverConfig.host,
@@ -18,46 +29,22 @@ module.exports = function (RED) {
           username: msg.username || node.serverConfig.username,
           password: msg.password || node.serverConfig.password,
         };
-
-        if (axiosConfig.mode != 'https' && axiosConfig.mode != 'http') throw new ProtocolError();
-
-        // Set up Axios Instance
-        const instance = createInstance(axiosConfig);
+        const obix = new ObixInstance(axiosConfig);
         node.status({ fill: 'blue', shape: 'ring', text: 'Pulling...' });
-
         const action = msg.action || config.action;
-        const path = (msg.path || config.path)?.replaceAll(/^\/|\/$/g, ''); // Slice '/' from the path if it exists
-
+        console.log(action);
         switch (action) {
-          case 'read': {
-            response = await instance.get(path + '/out/');
-            result = { path, value: parseValue(response.data), action: 'read' };
+          case 'read':
+            result = await obix.obixRead({ path: msg.path || config.path });
             break;
-          }
-          case 'write': {
-            response = await instance.post(path + '/set/', `<real val="${msg.value || config.value}"/>`);
-            result = { path, value: parseValue(response.data), action: 'write' };
+          case 'write':
+            result = await obix.obixWrite({ path: msg.path || config.path, value: msg.value || config.value });
             break;
-          }
-          case 'batch': {
-            let paths = msg.paths || config.batchJson;
-            try {
-              paths = JSON.parse(paths);
-              // eslint-disable-next-line no-empty
-            } catch (e) {}
-            if (!Array.isArray(paths)) throw new BatchInvalidFormatError();
-
-            let body = '<list is="obix:BatchIn">';
-            paths.forEach((p) => {
-              const { is, val } = p.action == 'write' || (!p.action && p.value) ? { is: 'Invoke', val: 'set' } : { is: 'Read', val: 'out' };
-              const vPath = p.path?.replaceAll(/^\/|\/$/g, ''); // Slice '/' from the path if it exists
-              body += `<uri is="obix:${is}" val="${getObixBaseUri(axiosConfig)}/config/${vPath}/${val}"><real name="in" val="${p.value}" /></uri>`;
-            });
-            body += '</list>';
-            response = await instance.post(`${getObixBaseUri(axiosConfig)}/batch`, body);
-            result = { ...batchParse(response.data.list), action: 'batch' };
+          case 'batch':
+            result = await obix.obixBatch({ batch: JSON.parse(msg.path || msg.batch || config.batch || null) });
+            shouldWarn = result.find((r) => r.error);
+            warnReason = 'Batch contains an error';
             break;
-          }
           default:
             throw new InvalidActionError();
         }
@@ -67,12 +54,12 @@ module.exports = function (RED) {
         msg.payload = result;
 
         send(msg);
-        result.containsError ? node.status({ fill: 'yellow', shape: 'ring', text: 'Batch contains an error' }) : node.status({});
+        shouldWarn ? node.status({ fill: 'yellow', shape: 'ring', text: warnReason }) : node.status({});
         done && done();
       } catch (error) {
-        // eslint-disable-next-line no-ex-assign
-        if (!(error instanceof NodeRedError)) error = new NodeRedError({ inDepthError: error });
-        error.throwNodeRedError({ node, done, msg });
+        node.status({ fill: 'red', shape: 'dot', text: error.friendlyError || 'Error' });
+        if (done) done(error.inDepthError || error);
+        else node.error(error.inDepthError || error, msg);
       }
     });
   }
