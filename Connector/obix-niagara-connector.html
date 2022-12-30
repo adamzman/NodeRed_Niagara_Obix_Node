@@ -1,46 +1,71 @@
 <script type="text/javascript">
   RED.nodes.registerType('Niagara Obix Connector', {
     category: 'config',
+    credentials: {
+      username: { type: 'text' },
+      password: { type: 'password' },
+    },
     defaults: {
       displayName: { value: '' },
-      username: { value: '', required: true },
-      password: { value: '', required: true },
+      useCredentialsFromSettings: { value: false },
+      credentialsKey: { value: '' },
       host: { value: 'localhost' },
-      mode: { value: 'https' },
+      protocol: { value: 'https' },
       port: { value: '443' },
     },
     label: function () {
-      return this.displayName ? this.displayName : (this.host || this.port ? this.host + ':' + this.port : this.username) || 'Obix Connector';
+      return this.displayName || (this.host && this.port ? `${this.host}:${this.port}` : this.username) || 'Obix Connector';
+    },
+    oneditprepare: function () {
+      $('#node-config-input-useCredentialsFromSettings').change(function () {
+        if ($(this).prop('checked')) {
+          $('.credentials-row').hide();
+          $('.credentials-key-row').show();
+        } else {
+          $('.credentials-row').show();
+          $('.credentials-key-row').hide();
+        }
+      });
     },
   });
 </script>
 
 <script type="text/html" data-template-name="Niagara Obix Connector">
   <div class="form-row">
-    <label for="node-config-input-displayName" style="width: 100%"><i class="fa fa-tag"></i> Connection Display Name:</label><br />
-    <input type="text" id="node-config-input-displayName" placeholder="ex. Niagara Station1" />
+    <label for="node-config-input-displayName"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-config-input-displayName" placeholder="ex. Niagara Station 1" />
   </div>
+  <hr />
   <div class="form-row">
-    <label for="node-config-input-username" style="width: 100%"><i class="fa fa-user"></i> Obix Username:</label><br />
+    <label for="node-config-input-useCredentialsFromSettings"><i class="fa fa-gear"></i> Use Settings Credentials</label>
+    <input type="checkbox" id="node-config-input-useCredentialsFromSettings" style="display: inline-block; width: 22px; vertical-align: super;" />
+  </div>
+  <div class="form-row credentials-row">
+    <label for="node-config-input-username"><i class="fa fa-user"></i> Username</label>
     <input type="text" id="node-config-input-username" placeholder="Obix user" />
   </div>
-  <div class="form-row">
-    <label for="node-config-input-password" style="width: 100%"><i class="fa fa-lock"></i> Obix Password:</label><br />
+  <div class="form-row credentials-row">
+    <label for="node-config-input-password"><i class="fa fa-lock"></i> Password</label>
     <input type="password" id="node-config-input-password" placeholder="Obix user password" />
   </div>
+  <div class="form-row credentials-key-row">
+    <label for="node-config-input-credentialsKey"><i class="fa fa-key"></i> Key</label>
+    <input type="text" id="node-config-input-credentialsKey" placeholder="ex. station1Credentials" />
+  </div>
+  <hr />
   <div class="form-row">
-    <label for="node-config-input-host" style="width: 100%"><i class="fa fa-globe"></i> Niagara IP Address:</label><br />
+    <label for="node-config-input-host"><i class="fa fa-globe"></i> IP Address</label>
     <input type="text" id="node-config-input-host" placeholder="ex. 192.168.1.10" />
   </div>
   <div class="form-row">
-    <label for="node-config-input-mode" style="width: 100%"><i class="fa fa-shield"></i> Connector Security Mode:</label><br />
-    <select name="node-config-input-mode" id="node-config-input-mode">
+    <label for="node-config-input-protocol"><i class="fa fa-shield"></i> Protocol</label>
+    <select name="node-config-input-protocol" id="node-config-input-protocol">
       <option value="https">HTTPS</option>
       <option value="http">HTTP</option>
     </select>
   </div>
   <div class="form-row">
-    <label for="node-config-input-port" style="width: 100%"><i class="fa fa-shield"></i> Niagara HTTPS/HTTP Port:</label><br />
+    <label for="node-config-input-port"><i class="fa fa-shield"></i> Port</label>
     <input type="number" id="node-config-input-port" placeholder="ex. 443" />
   </div>
   <div class="form-tips">
@@ -51,8 +76,6 @@
 
 <!-- Help -->
 <script type="text/html" data-help-name="Niagara Obix Connector">
-  <p>Holds the configuration values for the Niagara Obix Nodes</p>
-
   <h3>Details</h3>
-  <div>More Details can be found <a href="https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/tree/master/Connector">here</a></div>
+  <div>Details about this node can be found <a href="https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/tree/master/Connector">here</a></div>
 </script>

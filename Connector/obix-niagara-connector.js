@@ -2,11 +2,16 @@ module.exports = function (RED) {
   function ConnectorNode(n) {
     RED.nodes.createNode(this, n);
     this.displayName = n.displayName;
-    this.username = n.username;
-    this.password = n.password;
-    this.mode = n.mode || 'https';
+    this.useCredentialsFromSettings = n.useCredentialsFromSettings;
+    this.credentialsKey = n.credentialsKey;
+    this.protocol = n.protocol || 'https';
     this.host = n.host || 'localhost';
-    this.port = n.port || (this.mode == 'https' ? 443 : 80);
+    this.port = n.port || (this.protocol == 'https' ? 443 : 80);
   }
-  RED.nodes.registerType('Niagara Obix Connector', ConnectorNode);
+  RED.nodes.registerType('Niagara Obix Connector', ConnectorNode, {
+    credentials: {
+      username: { type: 'text' },
+      password: { type: 'password' },
+    },
+  });
 };
