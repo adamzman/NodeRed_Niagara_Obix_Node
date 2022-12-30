@@ -1,22 +1,23 @@
 ## Niagara Obix History Node
 
-Returns Histories from the connected Niagara Station
+Returns Histories from the connected Niagara station
 
-- **Path** - Used to indicate which history you want to interact with... Path starts after histories... ex. histories/TestHistories/History, only take "TestHistories/History".
-- **Preset Query** - Preset history queries. Can be overridden with a custom query by passing in msg.historyQuery (More details below).
+- **Path** - Used to indicate which history to interact with... path starts after histories... ex. `history:/History_Demo/Global$2fOutside_Air_Temp`, only take `"History_Demo/Global$2fOutside_Air_Temp"`.
+- **Type** - Either use a preset query or custom history query.
+- **Query** - Preset history query or custom query (More details below).
 
 ### Dynamic Values
 
-Each instance of the Niagara Obix Node can have its values inserted dynamically. Each dynamic value has the same functionality as the values above. Passing the following values will **override** the default values you may pre-configured.
+Passing the following values will **override** the default values you may pre-configured.
 
 - `msg.username` -> Username (String)
 - `msg.password` -> Password (String)
-- `msg.host` -> IP Address (String)
+- `msg.credentialsKey` -> Key used to obtain credentials from Node-RED settings file (Overrides `msg.username` and `msg.password`) (String)
 - `msg.protocol` -> 'https' or 'http' (String)
+- `msg.host` -> IP Address (String)
 - `msg.port` -> HTTPS/HTTP Port (Number)
 - `msg.path` -> Path (String)
-- `msg.historyQuery` -> History Query (Overrides the PresetQuery Selection) (JSON Object : See formatting options below)
-- `msg.presetQuery` -> Use a Preset History Query (Overrides the PresetQuery Selection) (String : Values must be one of the following)
+- `msg.presetQuery` -> Preset history query (String : Values must be one of the following)
 
   - "yesterday"
   - "last24Hours"
@@ -29,7 +30,15 @@ Each instance of the Niagara Obix Node can have its values inserted dynamically.
   - "lastYear (limit=1000)"
   - "unboundedQuery"
 
-- **msg.historyQuery** - Used to specify what time period and how many records you want to read from a history...
-  - Basic Query format `{"start": "2020-10-11T12:40:05-04:00", "end": "2020-10-14T12:40:05-04:00", "limit": "2"}`.
+- `msg.historyQuery` -> Custom history query used to specify what time period and how many records you want to read from a history (Object)
+  - Basic query format
+    ```
+    {
+      "start": "2020-10-11T12:40:05-04:00",
+      "end": "2020-10-14T12:40:05-04:00" || Date.now(),
+      "limit": "2"
+    }
+    ```
+  - **Start and end can be in any JS Date format**
   - Start and end are the periods of reading data, and the limit is the number of records returned.
   - If there are more records than the limit allows, then it returns the number of records starting from the start time.

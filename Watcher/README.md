@@ -1,13 +1,30 @@
 ## Niagara Obix Watcher Node
 
 Watches several points and returns an array of values. **Will read the 'out' value of the path**
-The inject button is similar to redeploying node red. It just restarts the poll.
 
-- **Topic** - The topic for the msg output (optional).
+- **Topic** - The topic sent with the msg every poll (optional).
 - **Poll Rate** - The interval at which points are returned. Must be 5 or more seconds.
-- **Relativize** - The path to be prepended to the configured paths below. (optional, will only prepend to paths that have the Relativized checkbox checked)
-- **Search Paths** - Searches through the list of paths that are configured below.
-- **Paths** - The list of paths that are returned on each pull. Add a new Path by clicking the "Add New Path" and Delete a path by clicking the "x" next to the path. You can also sort the list by clicking the sort button or dragging the three bars next to the path. The duplicate button does duplicates the values of that row to a new row.
+- **Poll Changes** - Toggle whether the poll only returns points which the value has changed since the last poll, or return the values of all the points every poll.
+- **Paths** - The list of paths that are returned on each poll.
 
-![Example of Niagara Tree](https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/blob/master/Watcher/niagara.jpg?raw=true 'Example of Niagara Tree')
-![Example of Node Red configuration](https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/blob/master/Watcher/nodered.jpg?raw=true 'Example of Node Red configuration')
+### Dynamic Values
+
+Passing the following values will **override** the default values you may pre-configured.
+
+- `msg.topic` -> Attached as the topic for every poll message (Any)
+- `msg.username` -> Username (String)
+- `msg.password` -> Password (String)
+- `msg.credentialsKey` -> Key used to obtain credentials from Node-RED settings file (Overrides `msg.username` and `msg.password`) (String)
+- `msg.protocol` -> 'https' or 'http' (String)
+- `msg.host` -> IP Address (String)
+- `msg.port` -> HTTPS/HTTP Port (Number)
+- `msg.pollRate` -> Rate at which the poll will be fired (Number >= 5)
+- `msg.pollRefresh` -> Set to `true` to poll all watcher's configured paths (Boolean)
+- `msg.pollChanges` -> Set to `true` to poll all watcher's configured paths that have changed since last poll (Boolean)
+- `msg.pollStop` -> Set to `true` to stop polling and delete the current watcher (Boolean)
+- `msg.pollChangesOnly` -> **Use when creating the watcher.** Toggle whether the poll only returns points which the value has changed since the last poll, or return the values of all the points every poll (Boolean)
+- `msg.paths` -> Paths to add to watcher (String[] || String)
+  - Basic paths format
+    ```
+    ["Point/Test", "Point/Test1"]
+    ```

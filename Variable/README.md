@@ -1,22 +1,37 @@
 ## Niagara Obix Variable Node
 
-Returns/Writes points to the Niagara using the obix protocol. **Can only read the 'out' value of a control point, and write to the 'set' value.**
+Returns/Writes points to the connected Niagara station using the obix protocol. **Can read the 'out' value of a control point, write to the 'set' value, and batch read/write**
 
-- **Path** - Used to indicate which variable/point you want to interact with... Path starts after config... ex. config/TestFolder/TestPoint, only take "TestFolder/TestPoint".
-- **Action** - Pick whether you want to read or write to a specific variable/point in the station's config folder.
-- **Value** - If `Action` is set to `Write`, this is the default value that will be written to the point specified in the path.
-- **Batch** - If `Action` is set to `Batch`, this is the default batch command ex. [{ path: 'Point/Test', action: 'write', value: 'test' }].
+- **Path** - Used to indicate which variable/point to interact with... path starts after config... ex. `config/TestFolder/TestPoint`, only take `"TestFolder/TestPoint"`.
+- **Action** - Read, write, or batch.
+- **Value** - If `Action` is set to `Write`, the value that will be written to the point specified in the path.
+- **Batch** - If `Action` is set to `Batch`, the mixture of read/write commands to be executed (More details below).
 
 ### Dynamic Values
 
-Each instance of the Niagara Obix Node can have its values inserted dynamically. Each dynamic value has the same functionality as the values above. Passing the following values will **override** the default values you may pre-configured.
+Passing the following values will **override** the default values you may pre-configured.
 
 - `msg.username` -> Username (String)
 - `msg.password` -> Password (String)
-- `msg.host` -> IP Address (String)
+- `msg.credentialsKey` -> Key used to obtain credentials from Node-RED settings file (Overrides `msg.username` and `msg.password`) (String)
 - `msg.protocol` -> 'https' or 'http' (String)
+- `msg.host` -> IP Address (String)
 - `msg.port` -> HTTPS/HTTP Port (Number)
-- `msg.path` -> Path to Variable (String)
-- `msg.action` -> 'read' or 'write' (String)
-- `msg.value` -> Value used when writing to path (String, Boolean, or Number)
-- `msg.batch || msg.path` -> Batch Read/Write (Object or Object[] : [{ path, action, value }])
+- `msg.path` -> Path (String)
+- `msg.action` -> 'read', 'write', or 'batch' (String)
+- `msg.value` -> If `action` is `write`, value used when writing to path (String, Boolean, or Number)
+- `msg.batch` -> If `action` is `batch`, batch read/write (Object or Object[])
+  - Basic batch format
+    ```
+    [
+      {
+        "path": "Point/Test",
+        "action": "write",
+        "value": "test"
+      },
+      {
+        "path": "Point/Test1",
+        "action": "read"
+      },
+    ]
+    ```
