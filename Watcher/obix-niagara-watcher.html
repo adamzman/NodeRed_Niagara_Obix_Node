@@ -7,7 +7,6 @@
       name: { value: '' },
       serverConfig: { value: '', type: 'Niagara Obix Connector' },
       topic: { value: '' },
-      // pullChangesOnly: { value: true },
       pollRate: {
         value: 10,
         required: true,
@@ -15,11 +14,10 @@
           return v >= 5;
         },
       },
-      relativize: { value: '' },
-      search: { value: '' },
-      rules: { value: [] },
+      pollChangesOnly: { value: false },
+      paths: { value: '' },
     },
-    inputs: 0,
+    inputs: 1,
     outputs: 1,
     icon: 'font-awesome/fa-search',
     button: {
@@ -66,140 +64,9 @@
       return this.name || 'Niagara Obix Watcher';
     },
     oneditprepare: function () {
-      const node = this;
-
-      // Setting Up Path List
-      $('#node-input-rule-container').editableList({
-        addButton: 'Add New Path',
-        height: 375,
-        scrollOnAdd: true,
-        sortable: true,
-        removable: true,
-        addItem: function (container, index, data) {
-          // Var Name Input
-          const row = $('<div/>', { style: 'display: flex' }).appendTo(container);
-
-          // Path Input
-          $('<input/>', {
-            class: 'node-input-rule-path-name',
-            type: 'text',
-            style: 'margin-left: 5px; flex: 2; align-self: center',
-            value: data.pathName || '',
-            placeholder: 'Insert Niagara Path',
-            title: 'Variable Path',
-          }).appendTo(row);
-
-          const row2 = $('<div/>', { style: 'flex: 1; min-width: 160px' }).appendTo(row);
-
-          // Relativize CheckBox
-          $('<input/>', {
-            class: 'node-input-rule-rel-flag',
-            type: 'checkbox',
-            style: 'margin-left: 7px; width: 20px;',
-            value: 'isRelativized',
-            title: 'Prepend Relativized Path?',
-          })
-            .prop('checked', data.relFlag || false)
-            .appendTo(row2);
-
-          // Relativize Label
-          $('<label/>', {
-            for: 'node-input-rule-rel-flag',
-            style: 'margin-bottom: 0; font-size: 10px; padding-top: 5px; vertical-align: middle; line-height: 34px; user-select: none; width: 50px',
-          })
-            .html('Relativized')
-            .on('click', function () {
-              $(this).parent().find('.node-input-rule-rel-flag').prop('checked', !$(this).parent().find('.node-input-rule-rel-flag').prop('checked'));
-            })
-            .appendTo(row2);
-
-          // Duplicate Button
-          $('<button/>', {
-            class: 'node-input-rule-path-duplicate red-ui-button red-ui-button-small',
-            type: 'button',
-            style: 'margin-left: 10px;',
-          })
-            .html('<i class="fa fa-clone"></i> Duplicate')
-            .on('click', function () {
-              $('#node-input-rule-container').editableList('addItem', {
-                relFlag: $(this).parent().find('.node-input-rule-rel-flag').prop('checked'),
-                pathName: $(this).parent().parent().find('.node-input-rule-path-name').val(),
-              });
-            })
-            .appendTo(row2);
-
-          // Update number of items being show in the list
-          $('#node-input-search').searchBox('count', `${index + 1} / ${index + 1}`);
-        },
-        removeItem: function (data) {
-          // Update number of items being show in the list
-          numOfPaths = $('#node-input-rule-container').editableList('length');
-          $('#node-input-search').searchBox('count', `${numOfPaths} / ${numOfPaths}`);
-        },
-      });
-
-      // Re-Renders Path Container when sort button is clicked
-      $('#sortButton').on('click', function () {
-        // Gets all Items from the EditableList
-        const listItems = $('#node-input-rule-container').editableList('items');
-        sortedRules = [];
-
-        listItems.each(function (index) {
-          sortedRules.push({
-            relFlag: $(this).find('.node-input-rule-rel-flag').prop('checked'),
-            pathName: $(this).find('.node-input-rule-path-name').val(),
-          });
-        });
-        sortedRules.sort((a, b) => (a.pathName > b.pathName ? 1 : -1));
-
-        // Reset List
-        $('#node-input-rule-container').html('');
-        sortedRules.forEach(function (data) {
-          $('#node-input-rule-container').editableList('addItem', data);
-        });
-      });
-
-      // Setting Up Search Bar
-      $('#node-input-search').searchBox({
-        change: function () {
-          numOfPaths = $('#node-input-rule-container').editableList('length');
-          numOfFilteredPaths = 0;
-          searchValue = $('#node-input-search').searchBox('value').toLowerCase();
-
-          $('#node-input-rule-container').editableList('filter', function (data) {
-            // Check each row and return true if it is in the search
-            if (data.pathName.toLowerCase().includes(searchValue) || data.pathName.length == 0) {
-              numOfFilteredPaths++;
-              return true;
-            } else return false;
-          });
-
-          // Shows the number of items being show in the list
-          $('#node-input-search').searchBox('count', `${numOfFilteredPaths} / ${numOfPaths}`);
-        },
-      });
-
-      // Adds Path Values to the rules list
-      this.rules.forEach((rule) => $('#node-input-rule-container').editableList('addItem', rule));
-    },
-    oneditsave: function () {
-      const node = this;
-      node.rules = [];
-      var unfilteredList = [];
-
-      const listItems = $('#node-input-rule-container').editableList('items');
-      listItems.each(function (i) {
-        var option = $(this);
-        var data = {
-          relFlag: option.find('.node-input-rule-rel-flag').prop('checked'),
-          pathName: option.find('.node-input-rule-path-name').val(),
-        };
-        unfilteredList.push(data);
-      });
-
-      // Remove Empty Paths
-      node.rules = unfilteredList.filter(function (value, index, self) {
-        return value.pathName != '';
+      $('#node-input-paths').typedInput({
+        type: 'json',
+        types: ['json'],
       });
     },
   });
@@ -209,69 +76,40 @@
 <script type="text/html" data-template-name="Niagara Obix Watcher">
   <div class="form-row">
     <!-- Name -->
-    <label for="node-input-name"><i class="fa fa-tag"></i> Name:</label>
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
     <input type="text" id="node-input-name" placeholder="Name" />
   </div>
   <div class="form-row">
     <!-- Server Config -->
-    <label for="node-input-serverConfig"><i class="fa fa-globe"></i> Connector:</label>
+    <label for="node-input-serverConfig"><i class="fa fa-globe"></i> Connector</label>
     <input type="text" id="node-input-serverConfig" />
+  </div>
+  <div class="form-row">
+    <!-- Topic -->
+    <label for="node-input-topic"><i class="fa fa-tasks"></i> Topic</label>
+    <input type="text" id="node-input-topic" />
   </div>
   <hr />
   <div class="form-row">
-    <!-- Topic -->
-    <label for="node-input-topic"><i class="fa fa-tasks"></i> Topic:</label>
-    <input type="text" id="node-input-topic" />
-  </div>
-  <div class="form-row">
     <!-- Poll Rate -->
-    <label for="node-input-pollRate"><i class="fa fa-refresh"></i> Poll Rate:</label>
+    <label for="node-input-pollRate">Poll Rate</label>
     <input title="Poll Rate must be 5 or more seconds" type="number" id="node-input-pollRate" style="width: 70px" />
     <span> seconds</span>
-    <!-- Pull Changes Checkbox -->
-    <!-- <span style="margin-left: 20px; cursor: pointer; user-select: none">
-            <input title="Only pull change that has changed" type="checkbox" id="node-input-pullChangesOnly" style="width: 20px"/>
-            <label for="node-input-pullChangesOnly" style="margin-bottom: 0; font-size: 12px; padding-top: 5px; vertical-align: middle; line-height: 34px; user-select: none; width: auto">Pull Changes Only?</label>
-        </span> -->
   </div>
   <div class="form-row">
-    <!-- Relativize -->
-    <label for="node-input-relativize"><i class="fa fa-dot-circle-o"></i> Relativize:</label>
-    <input title="Path to be prepended to selected paths below" type="text" id="node-input-relativize" placeholder="Relativized Path" />
-    <!-- TODO: Add an import button that allows to import a csv of paths -->
-    <!-- TODO: Add Auto Relativize Functionality -->
-    <!-- <div style="display: inline-block; width: 70%">
-            <input title="Path to be prepended to selected paths below" type="text" id="node-input-relativize" placeholder="Relativized Path" style="width: calc(100% - 44px);">
-            <div style="margin-left:5px; display: inline-block; position: relative;">
-                <button title="Auto-Relativize" type="button" class="red-ui-button" id="relativizeButton"><i class="fa fa-dot-circle-o"></i></button>
-            </div>
-        </div> -->
+    <!-- Poll Changes Only -->
+    <label for="node-input-pollChangesOnly">Poll Changes</label>
+    <input type="checkbox" id="node-input-pollChangesOnly" style="display: inline-block; width: 22px; vertical-align: top;" />
   </div>
   <div class="form-row">
-    <!-- Search -->
-    <label for="node-input-search" style="width:100%"><i class="fa fa-search"></i> Search Paths:</label>
-    <input type="text" id="node-input-search" style="border: 1px solid #ccc; border-radius: 4px;" />
-  </div>
-  <div class="form-row node-input-rule-container-row">
     <!-- Paths -->
-    <label for="node-input-rule-container"><i class="fa fa-tasks"></i> Paths:</label>
-    <button type="button" class="red-ui-button red-ui-button-small" id="sortButton" style="float: right">
-      <i class="fa fa-sort-alpha-asc"></i> Sort Paths
-    </button>
-    <ol id="node-input-rule-container"></ol>
+    <label for="node-input-paths">Paths</label>
+    <input type="text" id="node-input-paths" />
   </div>
 </script>
 
 <!-- Help -->
 <script type="text/html" data-help-name="Niagara Obix Watcher">
-  <p>A node that connects Node Red to Niagara through Obix Protocol. Watches a list of points from a Niagara Station and returns the values.</p>
-
   <h3>Details</h3>
-  <div>More Details about this node can be found <a href="https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/tree/master/Watcher">here</a></div>
-
-  <h3>Outputs</h3>
-  <dl class="message-properties">
-    <dt>payload <span class="property-type">object</span></dt>
-    <dd>an array of objects tht contain the path name and value of each configured path</dd>
-  </dl>
+  <div>Details about this node can be found <a href="https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/tree/master/Watcher">here</a></div>
 </script>

@@ -20,29 +20,37 @@ module.exports = function (RED) {
       // prettier-ignore
       send = send || function() { node.send.apply(node, arguments) }
       try {
-        let result, shouldWarn, warnReason;
+        let result, shouldWarnBatch, warningMessage;
+
+        const settingCredentials = RED.settings.niagaraObix?.[msg.credentialsKey || node.serverConfig.credentialsKey];
+        const { username, password } =
+          (msg.credentialsKey || node.serverConfig.useCredentialsFromSettings ? settingCredentials : node.serverConfig.credentials) || {};
         const axiosConfig = {
-          mode: msg.protocol || node.serverConfig.mode,
+          protocol: msg.protocol || node.serverConfig.protocol,
           host: msg.host || node.serverConfig.host,
           port: msg.port || node.serverConfig.port,
-          username: msg.username || node.serverConfig.username,
-          password: msg.password || node.serverConfig.password,
+          username: msg.username || username,
+          password: msg.password || password,
         };
         const obix = new ObixInstance(axiosConfig);
+
         node.status({ fill: 'blue', shape: 'ring', text: 'Pulling...' });
         const action = msg.action || config.action;
         switch (action) {
           case 'read':
-            result = await obix.obixRead({ path: msg.path || config.path });
+            result = await obix.read({ path: msg.path || config.path });
             break;
           case 'write':
-            result = await obix.obixWrite({ path: msg.path || config.path, value: msg.value || config.value });
+            result = await obix.write({ path: msg.path || config.path, value: msg.value || config.value });
             break;
-          case 'batch':
-            result = await obix.obixBatch({ batch: JSON.parse(msg.batch || msg.path || config.batch || null) });
-            shouldWarn = result.find((r) => r.error);
-            warnReason = 'Batch contains an error';
+          case 'batch': {
+            const batch = msg.batch || config.batch || null;
+            result = await obix.batch({ batch: typeof batch == 'string' ? JSON.parse(batch) : batch });
+            warningMessage = 'Batch contains an error';
+            shouldWarnBatch = result.find((r) => r.error);
+            shouldWarnBatch && node.warn(warningMessage);
             break;
+          }
           default:
             throw new InvalidActionError();
         }
@@ -52,7 +60,7 @@ module.exports = function (RED) {
         msg.payload = result;
 
         send(msg);
-        shouldWarn ? node.status({ fill: 'yellow', shape: 'ring', text: warnReason }) : node.status({});
+        shouldWarnBatch ? node.status({ fill: 'yellow', shape: 'ring', text: warningMessage }) : node.status({});
         done && done();
       } catch (error) {
         node.status({ fill: 'red', shape: 'dot', text: error.friendlyError || 'Error' });

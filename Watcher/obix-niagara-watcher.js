@@ -1,285 +1,137 @@
 module.exports = function (RED) {
-  const axios = require('axios');
-  const convert = require('xml-js');
-  const https = require('https');
+  const { ObixInstance } = require('obix-js');
 
-  function parseValue(value) {
-    try {
-      var variable = value._attributes.href.split('/obix/config/');
-      variable = variable[1].slice(0, -1);
+  function WatcherNode(config) {
+    RED.nodes.createNode(this, config);
+    const node = this;
 
-      msg = {
-        Variable: variable,
-        Value: value._attributes.val,
-      };
-      return msg;
-    } catch (error) {
-      return { error: error };
-    }
-  }
+    node.serverConfig = RED.nodes.getNode(config.serverConfig);
 
-  function parseData(data) {
-    var values = [];
-    if (data.obj.list.real) {
-      if (Array.isArray(data.obj.list.real)) {
-        data.obj.list.real.forEach((stuff) => values.push(parseValue(stuff)));
-      } else {
-        values.push(parseValue(data.obj.list.real));
-      }
-    }
-    if (data.obj.list.str) {
-      if (Array.isArray(data.obj.list.str)) {
-        data.obj.list.str.forEach((stuff) => values.push(parseValue(stuff)));
-      } else {
-        values.push(parseValue(data.obj.list.str));
-      }
-    }
-    if (data.obj.list.enum) {
-      if (Array.isArray(data.obj.list.enum)) {
-        data.obj.list.enum.forEach((stuff) => values.push(parseValue(stuff)));
-      } else {
-        values.push(parseValue(data.obj.list.enum));
-      }
-    }
-    if (data.obj.list.bool) {
-      if (Array.isArray(data.obj.list.bool)) {
-        data.obj.list.bool.forEach((stuff) => values.push(parseValue(stuff)));
-      } else {
-        values.push(parseValue(data.obj.list.bool));
-      }
-    }
-    return values;
-  }
+    //#region Helpers
+    const handleError = async (error, msg, done) => {
+      node.status({ fill: 'red', shape: 'dot', text: error.friendlyError || 'Error' });
+      await cleanup();
+      if (done) done(error.inDepthError || error);
+      else node.error(error.inDepthError || error, msg);
+    };
 
-  function handleErrors(error, node, msg) {
-    // Formatting Errors
-    // If cannot connect to server
-    if (error.code == 'ECONNABORTED') {
-      var friendlyError = 'Connection Error - Timeout';
-      var inDepthError =
-        'Error ECONNABORTED- Connection to server could not be established:\n' +
-        '\n1. Check the configured IP Address and Port' +
-        '\n2. Ensure http/https is enabled in the WebServices in Niagara';
-    }
-    // If invalid credentials
-    else if (error.message == 'Request failed with status code 401') {
-      var friendlyError = 'Invalid Username/Password - 401';
-      var inDepthError =
-        'Error 401 - Invalid Credentials:\n' +
-        '\n1. Ensure the Username / Password is correct' +
-        '\n2. Ensure the Obix user account has HTTPBasicScheme authentication (Check Documentation in Github for more details)';
-    }
-    // If permission error
-    else if (error.message == 'Request failed with status code 403') {
-      var friendlyError = 'Permission Error - 403';
-      var inDepthError = 'Error 403 - Permission Error:\n' + '\n1. Ensure the obix user has the admin role assigned / admin privileges';
-    }
-    // If obix driver missing
-    else if (error.message == 'Request failed with status code 404') {
-      var friendlyError = 'Obix Driver Missing - 404';
-      var inDepthError =
-        'Error 404 - Obix Driver most likely missing:\n' +
-        '\n1. Ensure the obix driver is placed directly under the Drivers in the Niagara tree (Check Documentation in Github for more details)';
-    } else {
-      var friendlyError = 'Unknown Error';
-      var inDepthError = error;
-    }
-
-    // Clearing Poll Change Interval
-    node.watchInterval ? clearInterval(node.watchInterval) : null;
-
-    // Set Node Error Information
-    node.loading = false;
-    node.status({ fill: 'red', shape: 'dot', text: friendlyError });
-    node.error(inDepthError, msg);
-    node.resendOnFail = setTimeout(() => node.emit('input', {}), 5000);
-  }
-
-  function findBadURI(pathsErrors, node, msg) {
-    try {
-      node.badPaths = [];
-      if (pathsErrors) {
-        if (Array.isArray(pathsErrors)) {
-          pathsErrors.forEach((error) => {
-            if (error._attributes.is == 'obix:BadUriErr') {
-              // node.badPaths.includes(error._attributes.display) ? null :
-              node.badPaths.push(error._attributes.display);
-            }
-          });
-        } else {
-          if (pathsErrors._attributes.is == 'obix:BadUriErr') {
-            // node.badPaths.includes(pathsErrors._attributes.display) ? null :
-            node.badPaths.push(pathsErrors._attributes.display);
-          }
-        }
-      }
-
-      if (node.badPaths.length != 0) {
-        node.status({ fill: 'yellow', shape: 'dot', text: node.badPaths.length + ' invalid path(s) found - ' + node.watchNumber });
-        node.error({ invalidPaths: node.badPaths }, msg);
-      } else {
-        node.status({ fill: node.serverConfig.mode == 'http' ? 'yellow' : 'green', shape: 'ring', text: 'Pulling From Watch: ' + node.watchNumber });
-      }
-    } catch (error) {
-      handleErrors(error, node, msg);
-    }
-  }
-
-  async function addToWatch(node, msg) {
-    try {
-      var pathsAddXML = [];
-      node.paths.forEach((path) => pathsAddXML.push('<uri val="/obix/config/' + path + '/"/>'));
-
-      var addRes = await node.instance.post(
-        node.watchRes.data.obj.op[0]._attributes.href,
-        `<obj
-                    is="obix:WatchIn"
-                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                    xmlns="http://obix.org/ns/schema/1.0">
-                    <list
-                        name="hrefs"
-                        of="obix:Uri">
-                        ` +
-          pathsAddXML +
-          `
-                    </list>
-                </obj>`
-      );
-      return addRes;
-    } catch (error) {
-      handleErrors(error, node, msg);
-    }
-  }
-
-  function WatcherNode(n) {
-    RED.nodes.createNode(this, n);
-
-    this.serverConfig = RED.nodes.getNode(n.serverConfig);
-    this.status({ fill: 'blue', shape: 'dot', text: 'Ready' });
-
-    this.topic = n.topic;
-    this.pollRate = (n.pollRate || 0) < 5 ? 10 : n.pollRate;
-    // this.pullChangesOnly = n.pullChangesOnly;
-    this.relativize = n.relativize;
-    this.rules = n.rules;
-
-    this.loading = false;
-    this.badPaths = [];
-
-    // Clean up relativize path
-    this.relativize.charAt(this.relativize.length - 1) == '/' ? (this.relativize = this.relativize.slice(0, -1)) : null;
-    this.relativize.charAt(0) == '/' ? (this.relativize = this.relativize.slice(1)) : null;
-
-    this.instance = axios.create({
-      baseURL: this.serverConfig.mode + '://' + this.serverConfig.host + ':' + this.serverConfig.port + '/obix/',
-      timeout: 2000,
-      auth: {
-        username: this.serverConfig.username,
-        password: this.serverConfig.password,
-      },
-      httpsAgent: new https.Agent({ rejectUnauthorized: false }),
-      transformResponse: [
-        function (data) {
-          try {
-            return convert.xml2js(data, { compact: true, spaces: 4 });
-          } catch (error) {
-            return data;
-          }
-        },
-      ],
-    });
-
-    var node = this;
-
-    // Prepare Paths - Remove '/' and prepend relativize
-    node.paths = [];
-    this.rules.forEach((rule) => {
-      var path = rule.pathName;
-      path.charAt(path.length - 1) == '/' ? (path = path.slice(0, -1)) : null;
-      path.charAt(0) == '/' ? (path = path.slice(1)) : null;
-
-      if (rule.relFlag) {
-        path = node.relativize + '/' + path;
-      }
-      node.paths.push(path);
-    });
-
-    setTimeout(() => node.emit('input', {}), 1000);
-
-    this.on('input', async function (msg, send, done) {
+    const cleanup = async () => {
       try {
-        // Prevent spamming of inject
-        if (this.loading) {
+        await node.watcher?.delete();
+        // eslint-disable-next-line no-empty
+      } catch (error) {}
+      clearInterval(node.watchInterval);
+      delete node.watcher;
+      node.loading = false;
+    };
+
+    const findWarningResult = (results) => {
+      const shouldWarn = results.find((r) => r.error);
+      if (shouldWarn) {
+        node.status({ fill: 'yellow', shape: 'ring', text: `Watch Warning: ${node.watcher.name}` });
+        node.warn('Error found in watcher request');
+      } else {
+        node.status({ fill: 'blue', shape: 'dot', text: `Watch Polled: ${node.watcher.name}` });
+      }
+    };
+    //#endregion Helpers
+
+    node.on('input', async function (msg, send, done) {
+      // prettier-ignore
+      send = send || function() { node.send.apply(node, arguments) }
+      try {
+        const pollChangesOnly = msg.pollChangesOnly == false ? false : msg.pollChangesOnly || config.pollChangesOnly;
+        const topic = msg.topic || config.topic;
+        const pollRate = Number(msg.pollRate || config.pollRate) * 1000;
+        const paths = JSON.parse(msg.paths || config.paths || null);
+        const { pollRefresh, pollChanges, pollStop } = msg;
+
+        if (pollRate < 5000) {
+          node.status({ fill: 'yellow', shape: 'ring', text: `pollRate must be 5 or greater` });
+          node.warn(`pollRate must be 5 or greater`);
+          done && done();
           return;
         }
 
-        // Clearing Poll Change Interval and Resend on Fail
-        this.watchInterval ? clearInterval(this.watchInterval) : null;
-        this.resendOnFail ? clearTimeout(this.resendOnFail) : null;
-        this.status({ fill: 'blue', shape: 'dot', text: 'Creating Watch' });
-        this.loading = true;
-
-        // Call - Delete Previous Watch if there was one
-        if (this.prevWatchDelete) {
-          await this.instance.post(this.prevWatchDelete);
+        if (pollRefresh || pollChanges || pollStop) {
+          if (!node.watcher) {
+            node.status({ fill: 'yellow', shape: 'ring', text: `No watcher has been created` });
+            node.warn(`No watcher has been created`);
+            done && done();
+            return;
+          }
+          if (pollRefresh || pollChanges) {
+            const results = pollRefresh ? await node.watcher.pollRefresh() : await node.watcher.pollChanges();
+            findWarningResult(results);
+            topic ? (msg.topic = topic) : null;
+            msg.payload = results;
+            send(msg);
+          }
+          if (pollStop) {
+            node.status({ fill: 'blue', shape: 'ring', text: `Watch Stopped: ${node.watcher.name}` });
+            await cleanup();
+          }
+          done && done();
+          return;
         }
 
-        // Call - Make Watch
-        this.watchRes = await this.instance.post('/watchService/make');
-        this.watchNumber = this.watchRes.data.obj._attributes.href.split(/[\s/]+/).slice(-2)[0];
-        this.prevWatchDelete = this.watchRes.data.obj.op[4]._attributes.href;
-        this.status({ fill: 'green', shape: 'dot', text: 'Watch Created: ' + this.watchNumber });
+        // Prevent spamming of inject
+        if (node.loading) {
+          done && done();
+          return;
+        }
+        node.loading = true;
+        node.status({ fill: 'blue', shape: 'dot', text: 'Creating Watch' });
 
-        // Call - Change Lease Time
-        await this.instance.put(this.watchRes.data.obj.reltime._attributes.href, `<real val="${(this.pollRate + 5) * 1000}" />`);
+        const settingCredentials = RED.settings.niagaraObix?.[msg.credentialsKey || node.serverConfig.credentialsKey];
+        const { username, password } =
+          (msg.credentialsKey || node.serverConfig.useCredentialsFromSettings ? settingCredentials : node.serverConfig.credentials) || {};
+        const axiosConfig = {
+          protocol: msg.protocol || node.serverConfig.protocol,
+          host: msg.host || node.serverConfig.host,
+          port: msg.port || node.serverConfig.port,
+          username: msg.username || username,
+          password: msg.password || password,
+        };
+        const obix = new ObixInstance(axiosConfig);
 
-        // Call - Adds paths to watch
-        var results = await addToWatch(node, msg);
-        findBadURI(results.data.obj.list.err, node, msg);
-        var results = parseData(results.data);
-        node.send({ topic: node.topic, payload: results });
+        clearInterval(node.watchInterval);
+        try {
+          await node.watcher?.delete();
+          // eslint-disable-next-line no-empty
+        } catch (error) {}
 
-        // Call - Poll Change - Get values that have changed
-        this.watchInterval = setInterval(async () => {
-          // TODO: Countdown when the pull will happen
+        node.watcher = await obix.watcherCreate();
+        node.status({ fill: 'green', shape: 'dot', text: `Watch Created: ${node.watcher.name}` });
+        const results = (await Promise.all([node.watcher.lease({ leaseTime: pollRate * 2 }), node.watcher.add({ paths })]))[1];
+
+        node.watchInterval = setInterval(async () => {
           try {
-            // Call - Adds paths to watch
-            var results = await addToWatch(node, msg);
-            // Check for bad paths
-            findBadURI(results.data.obj.list.err, node, msg);
-
-            // TODO: Change so, on input, actually does a poll refresh/change instead
-            // Call - Poll Refresh - Get initial values
-            // var pollResults = await node.instance.post(node.pullChangesOnly ? node.watchRes.data.obj.op[2]._attributes.href : node.watchRes.data.obj.op[3]._attributes.href);
-
-            var results = parseData(results.data);
-            node.send({ topic: node.topic, payload: results });
+            const results = pollChangesOnly ? await node.watcher.pollChanges() : await node.watcher.pollRefresh();
+            findWarningResult(results);
+            const msg = { payload: results };
+            topic ? (msg.topic = topic) : null;
+            send(msg);
           } catch (error) {
-            handleErrors(error, node, msg);
+            handleError(error, msg);
           }
-        }, this.pollRate * 1000);
+        }, pollRate);
 
-        this.loading = false;
+        topic ? (msg.topic = topic) : null;
+        msg.payload = results;
+        findWarningResult(results);
+        node.loading = false;
+        send(msg);
+        done && done();
       } catch (error) {
-        handleErrors(error, node, msg);
+        handleError(error, msg, done);
       }
     });
 
-    this.on('close', async function (removed, done) {
-      // Call - Delete Previous Watch if there was one
-      if (this.prevWatchDelete) {
-        await this.instance.post(this.prevWatchDelete);
-        delete this.prevWatchDelete;
-      }
-
-      // Clearing Poll Change Interval and Resend on Fail
-      this.watchInterval ? clearInterval(this.watchInterval) : null;
-      this.resendOnFail ? clearTimeout(this.resendOnFail) : null;
-
-      this.loading = false;
-      this.badPaths = [];
-      this.status({ fill: 'red', shape: 'ring', text: 'Disconnected' });
-      done();
+    node.on('close', async function (removed, done) {
+      node.status({});
+      await cleanup();
+      done && done();
     });
   }
 

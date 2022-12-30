@@ -13,18 +13,8 @@
         value: true,
         validate: RED.validators.typedInput('valueType'),
       },
-      valueType: {
-        value: 'bool',
-      },
-      batch: {
-        value: `[
-  {
-    "path": "Test/Path",
-    "action": "read/write",
-    "value": 100
-  }
-]`,
-      },
+      valueType: { value: 'bool' },
+      batch: { value: '' },
     },
     inputs: 1,
     outputs: 1,
@@ -72,7 +62,6 @@
     label: function () {
       return this.name || 'Niagara Obix Variable';
     },
-    // Used for the input type selector
     oneditprepare: function () {
       $('#node-input-value').typedInput({
         default: 'bool',
@@ -121,79 +110,45 @@
 <script type="text/html" data-template-name="Niagara Obix Variable">
   <div class="form-row">
     <!-- Name -->
-    <label for="node-input-name"><i class="fa fa-tag"></i> Name:</label>
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
     <input type="text" id="node-input-name" placeholder="Name" />
   </div>
   <div class="form-row">
     <!-- Server Config -->
-    <label for="node-input-serverConfig"><i class="fa fa-globe"></i> Connector:</label>
+    <label for="node-input-serverConfig"><i class="fa fa-globe"></i> Connector</label>
     <input type="text" id="node-input-serverConfig" />
+  </div>
+  <div class="form-row">
+    <!-- Topic -->
+    <label for="node-input-topic"><i class="fa fa-tasks"></i> Topic</label>
+    <input type="text" id="node-input-topic" />
   </div>
   <hr />
   <div class="form-row">
-    <!-- Topic -->
-    <label for="node-input-topic"><i class="fa fa-tasks"></i> Topic:</label>
-    <input type="text" id="node-input-topic" />
-  </div>
-  <div class="form-row">
     <!-- Action -->
-    <label for="node-input-action"><i class="fa fa-exchange"></i> Action:</label>
+    <label for="node-input-action">Action</label>
     <input type="text" id="node-input-action" />
   </div>
   <div class="form-row write-read-type-row">
     <!-- Path -->
-    <label for="node-input-path"><i class="fa fa-tasks"></i> Path:</label>
+    <label for="node-input-path">Path</label>
     <input type="text" id="node-input-path" placeholder="PointFolder/PointName" />
   </div>
   <div class="form-row write-type-row">
     <!-- Value -->
-    <label for="node-input-value"><i class="fa fa-tags"></i> Value:</label>
+    <label for="node-input-value">Value</label>
     <input type="text" id="node-input-value" />
     <input type="hidden" id="node-input-valueType" />
   </div>
   <div class="form-row batch-type-row">
     <!-- JSON Batch -->
-    <label for="node-input-batch"><i class="fa fa-tags"></i> Batch:</label>
+    <label for="node-input-batch">Batch</label>
     <input type="text" id="node-input-batch" />
   </div>
 </script>
 
 <!-- Help -->
 <script type="text/html" data-help-name="Niagara Obix Variable">
-  <p>A node that connects Node Red to Niagara through Obix Protocol. Returns an Object || Object[] with the Variable/Point Name and the Value.</p>
-
   <h3>Details</h3>
-  <div>
-    More Details about the input values can be found <a href="https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/tree/master/Variable">here</a>
-  </div>
-
-  <h3>Inputs (Each is optional)</h3>
-  <dl class="message-properties">
-    <dt class="optional">topic <span class="property-type">string</span></dt>
-    <dd>changes the msg topic.</dd>
-    <dt class="optional">username <span class="property-type">string</span></dt>
-    <dd>the Niagara Obix Username.</dd>
-    <dt class="optional">password <span class="property-type">string</span></dt>
-    <dd>the Niagara Obix Password.</dd>
-    <dt class="optional">host <span class="property-type">string</span></dt>
-    <dd>the IP Address of the Niagara Station.</dd>
-    <dt class="optional">protocol <span class="property-type">string</span></dt>
-    <dd>security protocol (must be either 'http' or 'https')</dd>
-    <dt class="optional">port <span class="property-type">number</span></dt>
-    <dd>the HTTPS/HTTP Port for the Niagara Station.</dd>
-    <dt class="optional">path <span class="property-type">string</span></dt>
-    <dd>a Path to the Variable/Point in the Niagara Station.</dd>
-    <dt class="optional">action <span class="property-type">string</span></dt>
-    <dd>provides the action (must be 'read', 'write', or 'batch')</dd>
-    <dt class="optional">value <span class="property-type">string | boolean | number</span></dt>
-    <dd>a value that overrides the default value from the node.</dd>
-    <dt class="optional">batch <span class="property-type">object | object[]</span></dt>
-    <dd>a value that overrides the default batch from the node. ex. [{ path: 'Point/Test', action: 'write', value: 'test' }]</dd>
-  </dl>
-
-  <h3>Outputs</h3>
-  <dl class="message-properties">
-    <dt>payload <span class="property-type">object</span></dt>
-    <dd>an Object / Object[] returned from Niagara.</dd>
-  </dl>
+  <div>Details about this node can be found <a href="https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/tree/master/Variable">here</a></div>
 </script>
