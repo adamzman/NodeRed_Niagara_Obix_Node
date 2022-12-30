@@ -17,7 +17,7 @@ To set up Obix in Niagara...
 4. Insert the HTTPBasicScheme `(baja -> AuthenticationSchemes -> WebServicesSchemes)` into the Authentication Service in the Services folder `(Config -> Services -> AuthenticationService -> Authentication Schemes)`.
    ![HTTPBasicSetup](https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/blob/master/images/HTTPBasicSetup.jpg?raw=true 'HTTPBasicSetup')
 5. Create a new user with an assigned role (role must have correct permissions to read/write to any points or histories), and select the HTTPBasicScheme for the Authentication Scheme Name.
-   - It is recommended to enable Auto Logoff with a short time period, or disabling 'Allow Concurrent Sessions', to reduce the amount of obix sessions Niagara has to manage.
+   - It is recommended to enable `Auto Logoff` with a short time period, or disabling `Allow Concurrent Sessions`, to reduce the amount of obix sessions Niagara has to manage.
      ![UserSetup](https://github.com/adamz0210/NodeRed_Niagara_Obix_Node/blob/master/images/UserSetup.jpg?raw=true 'UserSetup')
 
 ## Nodes
