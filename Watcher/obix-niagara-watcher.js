@@ -43,7 +43,8 @@ module.exports = function (RED) {
         const pollChangesOnly = msg.pollChangesOnly == false ? false : msg.pollChangesOnly || config.pollChangesOnly;
         const topic = msg.topic || config.topic;
         const pollRate = Number(msg.pollRate || config.pollRate) * 1000;
-        const paths = JSON.parse(msg.paths || config.paths || null);
+        let paths = msg.paths || config.paths || null;
+        paths = typeof paths == 'string' ? JSON.parse(paths) : paths;
         const { pollRefresh, pollChanges, pollStop } = msg;
 
         if (pollRate < 5000) {
