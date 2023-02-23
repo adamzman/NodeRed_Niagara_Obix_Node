@@ -1,5 +1,7 @@
 ## Niagara Obix Variable Node
 
+> **ENSURE README IS FOR CORRECT VERSION OF PACKAGE**
+
 Returns/Writes points to the connected Niagara station using the obix protocol. **Can read the 'out' value of a control point, write to the 'set' value, batch read/write, and GET or POST in the Niagara Tree and return as JSON**
 
 - **Path** - Used to indicate which variable/point to interact with... path starts after config... ex. `config/TestFolder/TestPoint`, only take `"TestFolder/TestPoint"`.

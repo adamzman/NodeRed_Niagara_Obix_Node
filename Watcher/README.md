@@ -1,5 +1,7 @@
 ## Niagara Obix Watcher Node
 
+> **ENSURE README IS FOR CORRECT VERSION OF PACKAGE**
+
 Watches several points and returns an array of values. **Will read the 'out' value of the path**
 
 - **Topic** - The topic sent with the msg every poll (optional).

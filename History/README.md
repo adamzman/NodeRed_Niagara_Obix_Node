@@ -1,5 +1,7 @@
 ## Niagara Obix History Node
 
+> **ENSURE README IS FOR CORRECT VERSION OF PACKAGE**
+
 Returns Histories from the connected Niagara station
 
 - **Path** - Used to indicate which history to interact with... path starts after histories... ex. `history:/History_Demo/Global$2fOutside_Air_Temp`, only take `"History_Demo/Global$2fOutside_Air_Temp"`.

@@ -1,5 +1,7 @@
 # Node-RED Obix Niagara Connector:
 
+> **ENSURE README IS FOR CORRECT VERSION OF PACKAGE**
+
 Links Node-RED to a Niagara Station through the Obix Protocol.
 
 - **Can read and write ('out' and 'set' slots) to control points under Drivers (in the Niagara Tree)**

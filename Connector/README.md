@@ -1,5 +1,7 @@
 ## Niagara Obix Connector Node
 
+> **ENSURE README IS FOR CORRECT VERSION OF PACKAGE**
+
 Holds the configuration values for the Niagara Obix Nodes.
 
 - **Use Settings Credentials** - Toggles whether to use built in username and password fields, or use the username and password from the Node-RED settings file.
