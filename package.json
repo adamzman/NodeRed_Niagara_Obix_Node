@@ -20,7 +20,7 @@
   "dependencies": {
     "obix-js": "^1.0.0"
   },
-  "homepage": "https://github.com/adamz0210/NodeRed_Niagara_Obix_Node",
+  "homepage": "https://github.com/adamzman/NodeRed_Niagara_Obix_Node",
   "license": "ISC",
   "devDependencies": {
     "eslint": "^8.24.0",
