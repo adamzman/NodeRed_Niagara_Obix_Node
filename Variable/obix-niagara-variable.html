@@ -15,6 +15,7 @@
       },
       valueType: { value: 'bool' },
       batch: { value: '' },
+      xmlPayload: { value: '' },
     },
     inputs: 1,
     outputs: 1,
@@ -71,19 +72,34 @@
       $('#node-input-action').change(function () {
         switch ($(this).val()) {
           case 'write':
+            $('.path-row').show();
             $('.write-type-row').show();
-            $('.write-read-type-row').show();
             $('.batch-type-row').hide();
+            $('.rawPost-type-row').hide();
             break;
           case 'read':
+            $('.path-row').show();
             $('.write-type-row').hide();
-            $('.write-read-type-row').show();
             $('.batch-type-row').hide();
+            $('.rawPost-type-row').hide();
             break;
           case 'batch':
+            $('.path-row').hide();
             $('.write-type-row').hide();
-            $('.write-read-type-row').hide();
             $('.batch-type-row').show();
+            $('.rawPost-type-row').hide();
+            break;
+          case 'rawGet':
+            $('.path-row').show();
+            $('.write-type-row').hide();
+            $('.batch-type-row').hide();
+            $('.rawPost-type-row').hide();
+            break;
+          case 'rawPost':
+            $('.path-row').show();
+            $('.write-type-row').hide();
+            $('.batch-type-row').hide();
+            $('.rawPost-type-row').show();
             break;
         }
       });
@@ -94,6 +110,8 @@
               { value: 'read', label: 'Read' },
               { value: 'write', label: 'Write' },
               { value: 'batch', label: 'Batch' },
+              { value: 'rawGet', label: 'Raw Get' },
+              { value: 'rawPost', label: 'Raw Post' },
             ],
           },
         ],
@@ -129,7 +147,7 @@
     <label for="node-input-action">Action</label>
     <input type="text" id="node-input-action" />
   </div>
-  <div class="form-row write-read-type-row">
+  <div class="form-row path-row">
     <!-- Path -->
     <label for="node-input-path">Path</label>
     <input type="text" id="node-input-path" placeholder="PointFolder/PointName" />
@@ -144,6 +162,11 @@
     <!-- JSON Batch -->
     <label for="node-input-batch">Batch</label>
     <input type="text" id="node-input-batch" />
+  </div>
+  <div class="form-row rawPost-type-row">
+    <!-- XML Raw Post -->
+    <label for="node-input-xmlPayload">XML Payload</label>
+    <input type="text" id="node-input-xmlPayload" />
   </div>
 </script>
 

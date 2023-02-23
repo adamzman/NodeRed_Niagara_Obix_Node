@@ -51,6 +51,12 @@ module.exports = function (RED) {
             shouldWarnBatch && node.warn(warningMessage);
             break;
           }
+          case 'rawGet':
+            result = await obix.get({ path: msg.path || config.path });
+            break;
+          case 'rawPost':
+            result = await obix.post({ path: msg.path || config.path, payload: msg.xmlPayload || config.xmlPayload });
+            break;
           default:
             throw new InvalidActionError();
         }

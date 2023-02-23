@@ -3,6 +3,7 @@
 Links Node-RED to a Niagara Station through the Obix Protocol.
 
 - **Can read and write ('out' and 'set' slots) to control points under Drivers (in the Niagara Tree)**
+- **Can GET or POST in the Niagara Tree and return as JSON**
 - **Can read histories**
 - **Can setup watchers which poll several points at a time on an interval**
 
