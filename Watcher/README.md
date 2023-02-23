@@ -1,6 +1,6 @@
 ## Niagara Obix Watcher Node
 
-> **ENSURE README IS FOR CORRECT VERSION OF PACKAGE**
+> **ENSURE README IS FOR CORRECT VERSION OF INSTALLED PACKAGE**
 
 Watches several points and returns an array of values. **Will read the 'out' value of the path**
 

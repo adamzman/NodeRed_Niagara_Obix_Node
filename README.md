@@ -1,6 +1,6 @@
 # Node-RED Obix Niagara Connector:
 
-> **ENSURE README IS FOR CORRECT VERSION OF PACKAGE**
+> **ENSURE README IS FOR CORRECT VERSION OF INSTALLED PACKAGE**
 
 Links Node-RED to a Niagara Station through the Obix Protocol.
 

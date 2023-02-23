@@ -1,6 +1,6 @@
 ## Niagara Obix History Node
 
-> **ENSURE README IS FOR CORRECT VERSION OF PACKAGE**
+> **ENSURE README IS FOR CORRECT VERSION OF INSTALLED PACKAGE**
 
 Returns Histories from the connected Niagara station
 

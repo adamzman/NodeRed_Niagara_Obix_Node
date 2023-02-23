@@ -1,6 +1,6 @@
 ## Niagara Obix Connector Node
 
-> **ENSURE README IS FOR CORRECT VERSION OF PACKAGE**
+> **ENSURE README IS FOR CORRECT VERSION OF INSTALLED PACKAGE**
 
 Holds the configuration values for the Niagara Obix Nodes.
 
