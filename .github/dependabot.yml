@@ -10,6 +10,4 @@ updates:
     schedule:
       interval: "daily"
     allow:
-      - "obix-js"
-    ignore:
-      - "*"
+      - obix-js
