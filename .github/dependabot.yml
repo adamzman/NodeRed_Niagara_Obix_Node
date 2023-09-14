@@ -10,4 +10,4 @@ updates:
     schedule:
       interval: "daily"
     allow:
-      - obix-js
+      - dependency-name: "obix-js"
