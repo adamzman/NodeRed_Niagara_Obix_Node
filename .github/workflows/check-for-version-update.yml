@@ -1,0 +1,49 @@
+name: Check for version update
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  check_version_update:
+    name: Check for version update
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Checkout ${{ github.base_ref }}
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.base_ref }}
+
+      - name: Set ${{ github.base_ref }} branch version variable
+        id: main_branch_version
+        run: echo "MAIN_BRANCH_VERSION=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout current branch
+        uses: actions/checkout@v3
+
+      - name: Set current branch version variable
+        id: current_branch_version
+        run: echo "CURRENT_BRANCH_VERSION=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Compare package versions
+        env:
+          CURRENT_BRANCH_VERSION: ${{ steps.current_branch_version.outputs.CURRENT_BRANCH_VERSION }}
+          MAIN_BRANCH_VERSION: ${{ steps.main_branch_version.outputs.MAIN_BRANCH_VERSION }}
+        run: |
+          echo "Current Branch Version: $CURRENT_BRANCH_VERSION"
+          echo "Main Branch Version: $MAIN_BRANCH_VERSION"
+
+          # Compare the versions
+          if [ "$MAIN_BRANCH_VERSION" == "$CURRENT_BRANCH_VERSION" ]; then
+            echo "The package version in ${{ github.base_ref }} and the current branch are the same. Update version."
+            exit 1
+          else
+            echo "The package versions are different. Success..."
+          fi
