@@ -1,8 +1,13 @@
 {
   "name": "node-red-contrib-obix-niagara-connector",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "Connector from Niagara to Node-Red using Obix",
   "author": "Adam Zimmerman",
+  "scripts": {
+    "major": "npm version major",
+    "minor": "npm version minor",
+    "patch": "npm version patch"
+  },
   "keywords": [
     "node-red",
     "Tridium",
@@ -18,7 +23,7 @@
     }
   },
   "dependencies": {
-    "obix-js": "^1.2.1"
+    "obix-js": "^1.2.4"
   },
   "homepage": "https://github.com/adamzman/NodeRed_Niagara_Obix_Node",
   "license": "ISC",

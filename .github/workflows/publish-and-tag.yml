@@ -1,0 +1,56 @@
+name: Publish to npm and create tag
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  tag:
+    name: Create tag
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Check out branch
+        uses: actions/checkout@v3
+
+      - name: Set current branch version variable
+        id: current_branch_version
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Setup git user
+        run: |
+          git config user.email "$(git show -s --format=%ae)"
+          git config user.name "$(git show -s --format=%an)"
+
+      - name: Create tag
+        run: git tag -a v${{ steps.current_branch_version.outputs.version }} -m "${{ steps.current_branch_version.outputs.version }}"
+
+      - name: Push to remote repository
+        run: git push origin v${{ steps.current_branch_version.outputs.version }}
+
+  release:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    needs: tag
+
+    steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # Use your npm token secret
+        run: npm publish --access public
