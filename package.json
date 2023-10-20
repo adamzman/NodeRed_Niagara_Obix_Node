@@ -3,6 +3,11 @@
   "version": "3.1.0",
   "description": "Connector from Niagara to Node-Red using Obix",
   "author": "Adam Zimmerman",
+  "scripts": {
+    "major": "npm version major",
+    "minor": "npm version minor",
+    "patch": "npm version patch"
+  },
   "keywords": [
     "node-red",
     "Tridium",
