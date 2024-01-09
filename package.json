@@ -23,7 +23,7 @@
     }
   },
   "dependencies": {
-    "obix-js": "^1.2.4"
+    "obix-js": "^1.2.5"
   },
   "homepage": "https://github.com/adamzman/NodeRed_Niagara_Obix_Node",
   "license": "ISC",
